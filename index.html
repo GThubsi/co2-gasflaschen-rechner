@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CO₂-Gasflaschen-Rechner</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #007BFF;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #e9ecef;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>CO₂-Gasflaschen-Rechner</h1>
+
+        <!-- Formular 1: Mindestraumgröße berechnen -->
+        <div id="form1">
+            <h2>Mindestraumgröße berechnen</h2>
+            <div class="form-group">
+                <label for="fillAmount">Füllmenge der CO₂-Flasche in kg:</label>
+                <input type="number" id="fillAmount" step="0.1">
+            </div>
+            <div class="form-group">
+                <label for="roomHeight">Raumhöhe in m:</label>
+                <input type="number" id="roomHeight" step="0.1">
+            </div>
+            <div class="form-group">
+                <label for="furniture">Möbel im Raum:</label>
+                <select id="furniture">
+                    <option value="no">Nein</option>
+                    <option value="yes">Ja</option>
+                </select>
+            </div>
+            <button onclick="calculateMinRoomSize()">Berechnen</button>
+            <div class="result" id="result1"></div>
+        </div>
+
+        <!-- Formular 2: Maximale nutzbare CO₂-Gasflasche berechnen -->
+        <div id="form2">
+            <h2>Maximale nutzbare CO₂-Gasflasche berechnen</h2>
+            <div class="form-group">
+                <label for="area">Vorhandene Fläche in m²:</label>
+                <input type="number" id="area" step="0.1">
+            </div>
+            <div class="form-group">
+                <label for="roomHeight2">Raumhöhe in m:</label>
+                <input type="number" id="roomHeight2" step="0.1">
+            </div>
+            <button onclick="calculateMaxGasCylinder()">Berechnen</button>
+            <div class="result" id="result2"></div>
+        </div>
+    </div>
+
+    <script>
+        function calculateMinRoomSize() {
+            const fillAmount = parseFloat(document.getElementById('fillAmount').value);
+            const roomHeight = parseFloat(document.getElementById('roomHeight').value);
+            const furniture = document.getElementById('furniture').value;
+
+            let minRoomVolume = fillAmount * 17;
+            let minRoomArea = (fillAmount * 7.5).toFixed(2);
+
+            if (furniture === 'yes') {
+                minRoomArea = (fillAmount * 7.5 * 1.1).toFixed(2);
+            }
+
+            document.getElementById('result1').innerHTML = `
+                <p><strong>Mindest-Raumgröße:</strong> ${minRoomVolume.toFixed(2)} m³</p>
+                <p><strong>Mindest-Raumfläche:</strong> ${minRoomArea} m²</p>
+            `;
+        }
+
+        function calculateMaxGasCylinder() {
+            const area = parseFloat(document.getElementById('area').value);
+            const roomHeight = parseFloat(document.getElementById('roomHeight2').value);
+
+            let maxGasCylinder = (area * roomHeight * (0.03 / 0.51)).toFixed(2);
+
+            if (maxGasCylinder > 6 && maxGasCylinder < 10) {
+                maxGasCylinder = 6;
+            }
+
+            document.getElementById('result2').innerHTML = `
+                <p><strong>Maximale nutzbare CO₂-Gasflasche:</strong> ${maxGasCylinder} kg</p>
+            `;
+        }
+    </script>
+</body>
+</html>
