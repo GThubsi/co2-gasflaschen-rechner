@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CO₂-Sicherheitsrechner mit PDF-Screenshot (Österreich)</title>
+    <title>CO₂-Sicherheitsrechner (Österreich)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
@@ -78,6 +78,45 @@
             padding: 1.5rem;
             margin-top: 2rem;
         }
+        .capacity-info, .ventilation-plan {
+            background: white;
+            border: 1px solid var(--secondary);
+            border-radius: 6px;
+            padding: 1rem;
+            margin: 1.5rem 0;
+        }
+        .cylinder-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+        .cylinder-table th, .cylinder-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        .cylinder-table th {
+            background-color: var(--primary);
+            color: white;
+        }
+        .combination {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            align-items: center;
+        }
+        .cylinder {
+            background: var(--secondary);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            font-weight: 600;
+        }
         .legal {
             font-size: 0.8rem;
             color: #666;
@@ -91,18 +130,22 @@
             display: flex;
             justify-content: space-around;
             margin: 1rem 0;
+            flex-wrap: wrap;
         }
         .vent-opening {
             text-align: center;
             padding: 1rem;
             border: 1px dashed #ccc;
             border-radius: 4px;
+            margin: 0.5rem;
+            flex: 1;
+            min-width: 150px;
         }
-        #pdfPreview {
-            max-width: 100%;
-            border: 1px solid #ddd;
-            margin-top: 1rem;
+        .loading {
             display: none;
+            text-align: center;
+            padding: 1rem;
+            font-weight: 600;
         }
     </style>
 </head>
@@ -132,132 +175,312 @@
                 </select>
             </div>
             <div class="form-group">
-                <label for="ventilation">Belüftung:</label>
+                <label for="ventilation">Belüftungstyp:</label>
                 <select id="ventilation">
                     <option value="natural">Natürlich</option>
                     <option value="mechanical">Mechanisch</option>
                     <option value="none">Keine</option>
                 </select>
             </div>
+            <div class="form-group">
+                <label for="usage">Nutzungsdauer:</label>
+                <select id="usage">
+                    <option value="short">≤4h/Tag</option>
+                    <option value="long">>4h/Tag</option>
+                </select>
+            </div>
         </div>
         
         <div>
             <button id="calculateBtn">Berechnen</button>
-            <button id="pdfButton">PDF mit Screenshot erstellen</button>
+            <button id="pdfButton">PDF Bericht erstellen</button>
         </div>
+        <div id="loading" class="loading">PDF wird generiert...</div>
         
         <div class="result-section" id="resultContainer">
-            <!-- Ergebnisse werden hier eingefügt -->
+            <div id="safetyResult"></div>
+            <div class="capacity-info" id="capacityResult"></div>
+            <div class="ventilation-plan" id="ventilationResult"></div>
         </div>
         
         <div class="legal">
-            <strong>Rechtsgrundlagen:</strong> ASchG §28, AAV Anlage 3, ÖNORM EN 13779
+            <strong>Rechtsgrundlagen:</strong> ASchG §28, AAV Anlage 3, ÖNORM EN 13779, TRGS 510
         </div>
     </div>
 
-    <img id="pdfPreview" alt="PDF Vorschau">
-
     <script>
         const { jsPDF } = window.jspdf;
+        const STANDARD_CYLINDERS = [2, 5, 10, 20, 50];
+        const SAFETY_FACTOR = 19; // 19 m³/kg nach ASchG §28
         
         document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('calculateBtn').addEventListener('click', calculate);
-            document.getElementById('pdfButton').addEventListener('click', generatePDFWithScreenshot);
+            document.getElementById('pdfButton').addEventListener('click', generatePDFReport);
         });
 
         function calculate() {
+            // Eingabewerte
             const roomLength = parseFloat(document.getElementById('roomLength').value) || 0;
             const roomWidth = parseFloat(document.getElementById('roomWidth').value) || 0;
             const roomHeight = parseFloat(document.getElementById('roomHeight').value) || 0;
             const furniture = document.getElementById('furniture').value;
             const ventilation = document.getElementById('ventilation').value;
+            const usage = document.getElementById('usage').value;
             
-            // Berechnungen
+            // Volumenberechnung mit Möblierungskorrektur
             const grossVolume = roomLength * roomWidth * roomHeight;
             const furnitureFactor = furniture === 'full' ? 0.85 : (furniture === 'partial' ? 0.93 : 1);
             const netVolume = grossVolume * furnitureFactor;
-            const maxCO2 = netVolume / 19; // 19 m³/kg nach ASchG
+            const maxCO2 = netVolume / SAFETY_FACTOR;
+            const deficit = grossVolume - netVolume;
             
-            // Ergebnis anzeigen
-            let html = `
-                <h2>Ergebnisse</h2>
-                <p><strong>Bruttovolumen:</strong> ${grossVolume.toFixed(1)} m³</p>
-                <p><strong>Effektives Volumen:</strong> ${netVolume.toFixed(1)} m³ (${(furnitureFactor*100).toFixed(0)}% Nutzung)</p>
+            // Sicherheitsbewertung
+            let safetyHTML = `
+                <h2>Sicherheitsbewertung</h2>
+                <p><strong>Bruttoraumvolumen:</strong> ${grossVolume.toFixed(1)} m³</p>
+                <p><strong>Effektives Nutzvolumen:</strong> ${netVolume.toFixed(1)} m³ (${(furnitureFactor*100).toFixed(0)}% nutzbar)</p>
                 <p><strong>Maximal zulässige CO₂-Menge:</strong> ${maxCO2.toFixed(1)} kg</p>
                 <p class="${ventilation === 'none' ? 'warning' : 'success'}">
                     ${ventilation === 'none' ? '⚠️ Keine Belüftung - besondere Vorsicht erforderlich!' : '✔️ Belüftungssystem vorhanden'}
                 </p>
-                
-                <h3>Lüftungsplan</h3>
+            `;
+            document.getElementById('safetyResult').innerHTML = safetyHTML;
+            
+            // Flaschenkapazität
+            let capacityHTML = `
+                <h3>Maximale Flaschenanzahl</h3>
+                <table class="cylinder-table">
+                    <thead>
+                        <tr>
+                            <th>Flaschengröße (kg)</th>
+                            <th>Max. Anzahl</th>
+                            <th>Gesamtkapazität (kg)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
             `;
             
-            // Lüftungsempfehlungen
+            STANDARD_CYLINDERS.forEach(cyl => {
+                const maxCylinders = Math.floor(maxCO2 / cyl);
+                if (maxCylinders > 0) {
+                    capacityHTML += `
+                        <tr>
+                            <td>${cyl}</td>
+                            <td>${maxCylinders}</td>
+                            <td>${(maxCylinders * cyl).toFixed(1)}</td>
+                        </tr>
+                    `;
+                }
+            });
+            
+            capacityHTML += `</tbody></table>`;
+            document.getElementById('capacityResult').innerHTML = capacityHTML;
+            
+            // Lüftungsplan und Empfehlungen
+            document.getElementById('ventilationResult').innerHTML = getVentilationRecommendation(
+                grossVolume, netVolume, ventilation, usage
+            );
+        }
+
+        function getVentilationRecommendation(grossVol, netVol, ventilation, usage) {
+            const deficit = grossVol - netVol;
+            let html = `<h3>Lüftungsplan (ÖNORM EN 13779)</h3>`;
+            
+            // Gaswarngerät-Empfehlung
+            const needsDetector = ventilation === 'none' || usage === 'long' || (netVol / grossVol) < 0.5;
+            if (needsDetector) {
+                html += `
+                    <div class="warning">
+                        <p>🔔 <strong>CO₂-Warngerät empfohlen</strong> (5.000 ppm Grenzwert nach TRGS 510)</p>
+                        <p>Begründung: ${ventilation === 'none' ? 'Keine Belüftung' : 
+                          usage === 'long' ? 'Langzeitaufenthalt (>4h/Tag)' : 'Raumvolumen <50% des Sollwerts'}</p>
+                    </div>
+                `;
+            }
+            
+            // Natürliche Lüftung
             if (ventilation === 'natural') {
-                const area = ((grossVolume - netVolume) * 0.06).toFixed(2);
+                const area = (deficit * 0.06).toFixed(2);
                 const size = (Math.sqrt(area)*100).toFixed(0);
                 
                 html += `
+                    <p><strong>Natürliche Lüftung erforderlich:</strong></p>
                     <p>Mindestöffnungsfläche: ${area} m² (ca. ${size}×${size} cm)</p>
                     <div class="ventilation-sketch">
                         <div class="vent-opening">
-                            <p>Untere Öffnung</p>
+                            <p><strong>Untere Öffnung</strong></p>
                             <p>≤50cm über Boden</p>
+                            <p>${(size/2).toFixed(0)}×${(size/2).toFixed(0)} cm</p>
                         </div>
                         <div class="vent-opening">
-                            <p>Obere Öffnung</p>
+                            <p><strong>Obere Öffnung</strong></p>
                             <p>≥1.80m über Boden</p>
+                            <p>${(size/2).toFixed(0)}×${(size/2).toFixed(0)} cm</p>
                         </div>
                     </div>
-                    <p><em>Horizontaler Abstand: ≥2m zwischen Öffnungen</em></p>
+                    <p><em>Horizontaler Mindestabstand zwischen Öffnungen: 2m</em></p>
                 `;
-            } else if (ventilation === 'mechanical') {
-                html += `<p>Mindestluftwechsel: ${((grossVolume - netVolume) * 1.8).toFixed(1)} m³/h (ÖNORM EN 13779 Klasse II)</p>`;
+                
+                if (deficit > 15) {
+                    html += `
+                        <div class="warning">
+                            <p>⚠️ Bei Volumendefizit >15m³ (aktuell: ${deficit.toFixed(1)}m³) ist mechanische Lüftung empfohlen</p>
+                        </div>
+                    `;
+                }
             }
             
-            document.getElementById('resultContainer').innerHTML = html;
+            // Mechanische Lüftung
+            if (ventilation === 'mechanical') {
+                const airflow = (deficit * 1.8).toFixed(1);
+                html += `
+                    <p><strong>Mechanische Lüftung erforderlich:</strong></p>
+                    <p>Mindestluftwechsel: ${airflow} m³/h (Klasse II nach ÖNORM EN 13779)</p>
+                `;
+            }
+            
+            // Kombinationsempfehlungen
+            const maxCO2 = netVol / SAFETY_FACTOR;
+            html += `
+                <h3>Optimale Flaschenkombinationen</h3>
+                <p>Für maximale Raumnutzung (${maxCO2.toFixed(1)} kg CO₂):</p>
+                ${getOptimalCombinations(maxCO2)}
+            `;
+            
+            return html;
         }
 
-        function generatePDFWithScreenshot() {
-            const element = document.getElementById('calculator');
-            const preview = document.getElementById('pdfPreview');
+        function getOptimalCombinations(maxCO2) {
+            let combinations = [];
             
-            // Vorschau anzeigen
-            preview.style.display = 'block';
-            
-            // Screenshot erstellen
-            html2canvas(element, {
-                scale: 1,
-                logging: false,
-                useCORS: true,
-                allowTaint: true,
-                scrollY: -window.scrollY
-            }).then(canvas => {
-                // Vorschau anzeigen
-                preview.src = canvas.toDataURL('image/png');
-                
-                // PDF erstellen
-                const pdf = new jsPDF('p', 'mm', 'a4');
-                const imgData = canvas.toDataURL('image/png');
-                const imgWidth = 190; // Max Breite in mm
-                const pageHeight = 277; // A4 Höhe in mm
-                const imgHeight = canvas.height * imgWidth / canvas.width;
-                let heightLeft = imgHeight;
-                let position = 10; // Startposition
-                
-                pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
-                heightLeft -= pageHeight;
-                
-                // Neue Seite falls nötig
-                while (heightLeft >= 0) {
-                    position = heightLeft - imgHeight;
-                    pdf.addPage();
-                    pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
-                    heightLeft -= pageHeight;
+            // 1-Flaschen-Lösungen
+            STANDARD_CYLINDERS.forEach(cyl => {
+                if (cyl <= maxCO2) {
+                    combinations.push({
+                        cylinders: [cyl],
+                        total: cyl,
+                        count: 1
+                    });
                 }
-                
-                // PDF speichern
-                pdf.save(`CO2-Sicherheitsbericht_${new Date().toISOString().slice(0,10)}.pdf`);
             });
+            
+            // 2-Flaschen-Kombinationen
+            for (let i = 0; i < STANDARD_CYLINDERS.length; i++) {
+                for (let j = i; j < STANDARD_CYLINDERS.length; j++) {
+                    const sum = STANDARD_CYLINDERS[i] + STANDARD_CYLINDERS[j];
+                    if (sum <= maxCO2) {
+                        combinations.push({
+                            cylinders: [STANDARD_CYLINDERS[i], STANDARD_CYLINDERS[j]],
+                            total: sum,
+                            count: 2
+                        });
+                    }
+                }
+            }
+            
+            // 3-Flaschen-Kombinationen (nur wenn sinnvoll)
+            if (maxCO2 > 20) {
+                for (let i = 0; i < STANDARD_CYLINDERS.length; i++) {
+                    for (let j = i; j < STANDARD_CYLINDERS.length; j++) {
+                        for (let k = j; k < STANDARD_CYLINDERS.length; k++) {
+                            const sum = STANDARD_CYLINDERS[i] + STANDARD_CYLINDERS[j] + STANDARD_CYLINDERS[k];
+                            if (sum <= maxCO2 && sum > maxCO2 * 0.8) {
+                                combinations.push({
+                                    cylinders: [STANDARD_CYLINDERS[i], STANDARD_CYLINDERS[j], STANDARD_CYLINDERS[k]],
+                                    total: sum,
+                                    count: 3
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Ergebnisse filtern und sortieren
+            combinations = combinations
+                .filter(c => c.total >= maxCO2 * 0.8) // Mind. 80% Auslastung
+                .sort((a, b) => b.total - a.total) // Beste Auslastung zuerst
+                .slice(0, 5); // Top 5 Kombinationen
+            
+            if (combinations.length === 0) return '<p>Keine normgerechten Kombinationen möglich</p>';
+            
+            let html = '';
+            combinations.forEach(comb => {
+                const percentage = (comb.total / maxCO2 * 100).toFixed(0);
+                html += `
+                    <div class="combination">
+                        ${comb.cylinders.map(c => `<span class="cylinder">${c}kg</span>`).join(' + ')}
+                        <span style="margin-left:auto">
+                            <strong>${comb.total.toFixed(1)} kg</strong> (${percentage}% Auslastung)
+                        </span>
+                    </div>
+                `;
+            });
+            
+            return html;
+        }
+
+        function generatePDFReport() {
+            const loading = document.getElementById('loading');
+            loading.style.display = 'block';
+            
+            // Kurze Verzögerung um UI-Update zu ermöglichen
+            setTimeout(() => {
+                const element = document.getElementById('calculator');
+                
+                html2canvas(element, {
+                    scale: 2,
+                    logging: false,
+                    useCORS: true,
+                    scrollY: -window.scrollY,
+                    allowTaint: true,
+                    windowHeight: element.scrollHeight
+                }).then(canvas => {
+                    const pdf = new jsPDF('p', 'mm', 'a4');
+                    const imgData = canvas.toDataURL('image/png');
+                    const imgWidth = 190; // Max Breite in mm (A4 mit Rand)
+                    const imgHeight = canvas.height * imgWidth / canvas.width;
+                    
+                    // PDF-Einstellungen
+                    pdf.setDocumentProperties({
+                        title: 'CO₂-Sicherheitsbericht',
+                        subject: 'Berechnung nach österreichischen Normen',
+                        author: 'CO₂-Sicherheitsrechner',
+                        keywords: 'CO2, Sicherheit, Österreich, ASchG, ÖNORM'
+                    });
+                    
+                    // Erste Seite (Screenshot)
+                    pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
+                    
+                    // Zweite Seite mit Details
+                    pdf.addPage();
+                    pdf.setFontSize(14);
+                    pdf.setTextColor(40);
+                    pdf.setFont('helvetica', 'bold');
+                    pdf.text("DETAILBEREICHNUNGEN", 105, 20, {align: 'center'});
+                    
+                    // Rechtsgrundlagen
+                    pdf.setFontSize(11);
+                    pdf.text("Rechtsgrundlagen (Österreich):", 20, 30);
+                    const laws = [
+                        "• ArbeitnehmerInnenschutzgesetz (ASchG) §28",
+                        "• Allgemeine Arbeitnehmerschutzverordnung (AAV) Anlage 3",
+                        "• ÖNORM EN 13779: Lüftung von Nichtwohngebäuden",
+                        "• TRGS 510: Technische Regeln für Gefahrstoffe"
+                    ];
+                    laws.forEach((law, i) => {
+                        pdf.text(law, 25, 40 + (i * 7));
+                    });
+                    
+                    // Speichern
+                    pdf.save(`CO2-Sicherheitsbericht_${new Date().toISOString().slice(0,10)}.pdf`);
+                    loading.style.display = 'none';
+                }).catch(err => {
+                    console.error('PDF Generation Error:', err);
+                    loading.style.display = 'none';
+                    alert('Fehler bei der PDF-Generierung. Bitte versuchen Sie es erneut.');
+                });
+            }, 100);
         }
     </script>
 </body>
