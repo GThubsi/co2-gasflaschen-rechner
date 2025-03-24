@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CO₂-Sicherheitsrechner (Österreich)</title>
+    <title>CO₂-Rechner mit Flaschenkombinationen (Österreich)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         :root {
             --primary: #2c3e50;
@@ -25,71 +24,42 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: var(--light);
             color: var(--dark);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
             line-height: 1.6;
-        }
-        
-        header {
-            background: var(--primary);
-            color: white;
-            padding: 1rem;
-            text-align: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            padding: 20px;
         }
         
         .container {
-            display: flex;
-            flex: 1;
-            padding: 1rem;
-            gap: 1rem;
             max-width: 1200px;
             margin: 0 auto;
-            width: 100%;
-        }
-        
-        .panel {
             background: white;
             border-radius: 8px;
-            padding: 1.5rem;
             box-shadow: 0 2px 15px rgba(0,0,0,0.1);
-            flex: 1;
+            padding: 2rem;
         }
         
         h1 {
-            color: white;
-            font-size: 1.8rem;
-        }
-        
-        h2 {
-            color: var(--secondary);
-            margin-bottom: 1rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 2px solid var(--secondary);
+            color: var(--primary);
+            text-align: center;
+            margin-bottom: 1.5rem;
         }
         
         .form-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            margin-bottom: 1rem;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
         }
         
-        .form-group {
-            margin-bottom: 1rem;
-        }
-        
-        label {
+        .form-group label {
             display: block;
-            margin-bottom: 0.3rem;
+            margin-bottom: 0.5rem;
             font-weight: 600;
             color: var(--primary);
         }
         
         input, select {
             width: 100%;
-            padding: 0.6rem;
+            padding: 0.8rem;
             border: 1px solid #ddd;
             border-radius: 4px;
             font-size: 1rem;
@@ -99,402 +69,240 @@
             background: var(--secondary);
             color: white;
             border: none;
-            padding: 0.8rem 1.5rem;
+            padding: 1rem 2rem;
             border-radius: 4px;
             cursor: pointer;
             font-size: 1rem;
             font-weight: 600;
             transition: all 0.3s;
-            margin-top: 0.5rem;
+            margin: 1rem 0;
         }
         
         button:hover {
             background: var(--primary);
-            transform: translateY(-2px);
-        }
-        
-        .button-group {
-            display: flex;
-            gap: 1rem;
-            margin-top: 1rem;
-        }
-        
-        .button-group button {
-            flex: 1;
         }
         
         #pdfButton {
             background: var(--accent);
+            margin-left: 1rem;
         }
         
-        .result-container {
-            margin-top: 1.5rem;
+        .result-section {
             background: #f8f9fa;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+        
+        .cylinder-combinations {
+            margin-top: 1.5rem;
+        }
+        
+        .combination {
+            background: white;
+            border: 1px solid #ddd;
             border-radius: 6px;
-            padding: 1.2rem;
-        }
-        
-        .result-title {
-            font-weight: 700;
-            color: var(--primary);
-            margin-bottom: 0.5rem;
-        }
-        
-        .success {
-            color: #27ae60;
-            background: #e8f8f0;
-            padding: 0.8rem;
-            border-radius: 4px;
-            margin-top: 1rem;
-        }
-        
-        .warning {
-            color: #e74c3c;
-            background: #fdedec;
-            padding: 0.8rem;
-            border-radius: 4px;
-            margin-top: 1rem;
-        }
-        
-        .recommendation {
-            background: #e8f4f8;
-            border-left: 4px solid var(--secondary);
             padding: 1rem;
-            margin: 1rem 0;
+            margin-bottom: 1rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
         }
         
-        .ventilation-calc {
-            background: #fff8e6;
-            border-left: 4px solid #ffc107;
-            padding: 1rem;
-            margin: 1rem 0;
+        .cylinder {
+            background: var(--secondary);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            font-weight: 600;
         }
         
-        .legal-note {
+        .legal {
             font-size: 0.8rem;
             color: #666;
             margin-top: 2rem;
             padding-top: 1rem;
             border-top: 1px solid #eee;
         }
-        
-        @media (max-width: 768px) {
-            .container {
-                flex-direction: column;
-            }
-            
-            .button-group {
-                flex-direction: column;
-            }
-        }
     </style>
 </head>
 <body>
-    <header>
-        <h1>CO₂-Sicherheitsrechner für Österreich</h1>
-    </header>
-    
     <div class="container">
-        <div class="panel">
-            <h2>Sicherheitsberechnung</h2>
-            
-            <div class="form-grid">
-                <div>
-                    <div class="form-group">
-                        <label for="fillAmount">Füllmenge (kg):</label>
-                        <input type="number" id="fillAmount" step="0.1" min="0.1" value="5">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="roomLength">Raumlänge (m):</label>
-                        <input type="number" id="roomLength" step="0.1" min="1" value="4">
-                    </div>
-                </div>
-                
-                <div>
-                    <div class="form-group">
-                        <label for="roomWidth">Raumbreite (m):</label>
-                        <input type="number" id="roomWidth" step="0.1" min="1" value="3">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="roomHeight">Raumhöhe (m):</label>
-                        <input type="number" id="roomHeight" step="0.1" min="1.5" value="2.5">
-                    </div>
-                </div>
-                
-                <div>
-                    <div class="form-group">
-                        <label for="furniture">Möblierung:</label>
-                        <select id="furniture">
-                            <option value="no">Keine Möbel</option>
-                            <option value="yes" selected>Möbliert</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="ventilation">Belüftung:</label>
-                        <select id="ventilation">
-                            <option value="natural">Natürlich</option>
-                            <option value="mechanical">Mechanisch</option>
-                            <option value="none">Keine</option>
-                        </select>
-                    </div>
-                </div>
+        <h1>CO₂-Flaschenrechner für Österreich</h1>
+        
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="fillAmount">Benötigte CO₂-Menge (kg):</label>
+                <input type="number" id="fillAmount" min="0.1" step="0.1" value="8">
             </div>
             
-            <div class="button-group">
-                <button id="calculateBtn">Berechnen</button>
-                <button id="pdfButton">PDF Bericht erstellen</button>
+            <div class="form-group">
+                <label for="roomLength">Raumlänge (m):</label>
+                <input type="number" id="roomLength" min="1" step="0.1" value="5">
             </div>
             
-            <div class="result-container" id="resultContainer">
-                <div class="info">
-                    Bitte geben Sie die Parameter ein und klicken Sie auf "Berechnen".
-                </div>
+            <div class="form-group">
+                <label for="roomWidth">Raumbreite (m):</label>
+                <input type="number" id="roomWidth" min="1" step="0.1" value="4">
             </div>
             
-            <div class="legal-note">
-                <strong>Rechtsgrundlagen (Österreich):</strong><br>
-                • ArbeitnehmerInnenschutzgesetz (ASchG)<br>
-                • Verordnung über die Allgemeine Arbeitnehmerschutzverordnung (AAV)<br>
-                • ÖNORM EN 13779 (Lüftung von Nichtwohngebäuden)<br>
-                • TRGS 510 (Technische Regeln für Gefahrstoffe)
+            <div class="form-group">
+                <label for="roomHeight">Raumhöhe (m):</label>
+                <input type="number" id="roomHeight" min="1.5" step="0.1" value="2.5">
             </div>
+        </div>
+        
+        <button id="calculateBtn">Berechnen</button>
+        <button id="pdfButton">PDF erstellen</button>
+        
+        <div class="result-section" id="resultContainer">
+            <h2>Ergebnisse</h2>
+            <div id="safetyResult"></div>
+            
+            <div class="cylinder-combinations">
+                <h3>Mögliche Flaschenkombinationen</h3>
+                <div id="combinationsResult"></div>
+            </div>
+        </div>
+        
+        <div class="legal">
+            <strong>Rechtsgrundlagen:</strong> ASchG §28, AAV Anlage 3, ÖNORM EN 13779, TRGS 510
         </div>
     </div>
 
     <script>
-        // PDF-Bibliothek initialisieren
         const { jsPDF } = window.jspdf;
         
+        // Standardflaschen nach österreichischer ÖNORM
+        const STANDARD_CYLINDERS = [2, 5, 10, 20, 50];
+        
         document.addEventListener('DOMContentLoaded', function() {
-            document.getElementById('calculateBtn').addEventListener('click', calculateSafety);
+            document.getElementById('calculateBtn').addEventListener('click', calculate);
             document.getElementById('pdfButton').addEventListener('click', generatePDF);
         });
 
-        function calculateSafety() {
+        function calculate() {
             const fillAmount = parseFloat(document.getElementById('fillAmount').value) || 0;
             const roomLength = parseFloat(document.getElementById('roomLength').value) || 0;
             const roomWidth = parseFloat(document.getElementById('roomWidth').value) || 0;
-            const roomHeight = parseFloat(document.getElementById('roomHeight').value) || 2.5;
-            const furniture = document.getElementById('furniture').value;
-            const ventilation = document.getElementById('ventilation').value;
-
-            // Berechnungen nach österreichischen Standards
+            const roomHeight = parseFloat(document.getElementById('roomHeight').value) || 0;
+            
             const roomVolume = roomLength * roomWidth * roomHeight;
-            const roomArea = roomLength * roomWidth;
+            const requiredVolume = fillAmount * 19; // 19 m³/kg nach ASchG
             
-            // Mindestanforderungen nach ASchG/AAV
-            let minVolumeRequired = fillAmount * 19; // 19 m³/kg nach österreichischer Praxis
-            let minAreaRequired = fillAmount * 8;    // 8 m²/kg 
-            
-            // Anpassungsfaktoren
-            if (furniture === 'yes') minAreaRequired *= 1.15;
-            if (ventilation === 'none') minVolumeRequired *= 1.4;
-
-            // Ergebnis
-            let resultHTML = `
-                <div class="result-title">Berechnungsergebnisse</div>
-                <p><strong>Aktueller Raum:</strong> ${roomVolume.toFixed(1)} m³ (${roomArea.toFixed(1)} m² Grundfläche)</p>
-                <p><strong>Mindestanforderungen nach ASchG/AAV:</strong><br>
-                • ${minVolumeRequired.toFixed(1)} m³ Volumen<br>
-                • ${minAreaRequired.toFixed(1)} m² Grundfläche</p>
+            // Sicherheitsbewertung
+            let safetyHTML = `
+                <p><strong>Raumvolumen:</strong> ${roomVolume.toFixed(1)} m³</p>
+                <p><strong>Benötigtes Mindestvolumen:</strong> ${requiredVolume.toFixed(1)} m³ (für ${fillAmount} kg CO₂)</p>
             `;
-
-            if (roomVolume >= minVolumeRequired && roomArea >= minAreaRequired) {
-                resultHTML += `<div class="success">✔️ Raum erfüllt die österreichischen Sicherheitsanforderungen</div>`;
+            
+            if (roomVolume >= requiredVolume) {
+                safetyHTML += `<p class="success">✔️ Raum ausreichend dimensioniert</p>`;
             } else {
-                resultHTML += `<div class="warning">⚠️ Achtung: Raum unterschreitet Mindestanforderungen gemäß ASchG!</div>`;
+                safetyHTML += `<p class="warning">⚠️ Raum zu klein - Lüftungsmaßnahmen erforderlich</p>`;
             }
-
-            // Empfehlungen
-            resultHTML += getRecommendations(fillAmount, roomVolume, minVolumeRequired, ventilation);
-
-            document.getElementById('resultContainer').innerHTML = resultHTML;
-        }
-
-        function getRecommendations(fillAmount, roomVolume, minVolumeRequired, ventilation) {
-            // Flaschenempfehlung
-            let recommendationsHTML = `
-                <div class="recommendation">
-                    <h4>Empfohlene Flaschen (ÖNORM):</h4>
-                    <ul>
-                        ${getCylinderRecommendations(fillAmount)}
-                    </ul>
-                </div>
-            `;
-
-            // Lüftungsempfehlung
-            if (roomVolume < minVolumeRequired) {
-                const deficit = minVolumeRequired - roomVolume;
-                recommendationsHTML += `
-                    <div class="ventilation-calc">
-                        <h4>⚠️ Lüftungsmaßnahmen erforderlich (ÖNORM EN 13779):</h4>
-                        ${getVentilationRecommendation(deficit, ventilation)}
-                        <p><strong>Alternative Sicherheitsmaßnahme:</strong> CO₂-Warngerät (5.000 ppm Grenzwert gemäß TRGS 510)</p>
-                    </div>
-                `;
-            }
-
-            return recommendationsHTML;
-        }
-
-        function getCylinderRecommendations(requiredKg) {
-            const cylinders = [
-                { size: 2, name: "Haushaltsflasche (ÖNORM M 7341)" },
-                { size: 5, name: "Standardflasche (ÖNORM M 7342)" },
-                { size: 10, name: "Industrieflasche (ÖNORM M 7343)" },
-                { size: 20, name: "Großflasche (ÖNORM M 7344)" }
-            ];
             
-            let options = '';
-            cylinders.forEach(cyl => {
-                if (cyl.size >= requiredKg * 0.6) {
-                    const status = cyl.size >= requiredKg ? '✔️ Normkonform' : '⚠️ Kombination erforderlich';
-                    options += `<li><strong>${cyl.size}kg ${cyl.name}:</strong> ${status}</li>`;
+            document.getElementById('safetyResult').innerHTML = safetyHTML;
+            
+            // Flaschenkombinationen berechnen
+            const combinations = calculateCombinations(fillAmount, roomVolume);
+            let combHTML = '';
+            
+            if (combinations.length > 0) {
+                combinations.forEach(comb => {
+                    combHTML += `<div class="combination">
+                        <span>${comb.total.toFixed(1)} kg (${comb.count} Flaschen):</span>
+                        ${comb.cylinders.map(c => `<span class="cylinder">${c}kg</span>`).join(' + ')}
+                    </div>`;
+                });
+            } else {
+                combHTML = `<p>Keine Standardkombination möglich - Spezialflasche erforderlich</p>`;
+            }
+            
+            document.getElementById('combinationsResult').innerHTML = combHTML;
+        }
+
+        function calculateCombinations(requiredKg, availableVolume) {
+            const maxKg = availableVolume / 19; // Maximal erlaubte Menge
+            const target = Math.min(requiredKg, maxKg);
+            
+            let results = [];
+            
+            // Einzelflaschen prüfen
+            STANDARD_CYLINDERS.forEach(cyl => {
+                if (cyl <= maxKg) {
+                    results.push({
+                        cylinders: [cyl],
+                        total: cyl,
+                        count: 1
+                    });
                 }
             });
             
-            return options || '<li>Spezialflasche erforderlich - Fachberatung empfohlen</li>';
-        }
-
-        function getVentilationRecommendation(deficit, ventilationType) {
-            const openingArea = (deficit * 0.06).toFixed(2); // 6% des Defizits nach ÖNORM
-            
-            if (ventilationType === 'mechanical') {
-                return `
-                    <p><strong>Mechanische Lüftung:</strong><br>
-                    Mindestluftwechsel: ${(deficit/1.8).toFixed(1)} m³/h (ÖNORM EN 13779 Klasse II)</p>
-                `;
-            } else {
-                return `
-                    <p><strong>Natürliche Lüftung:</strong></p>
-                    <ul>
-                        <li>Mindestöffnungsfläche: ${openingArea} m² (${(Math.sqrt(openingArea)*100).toFixed(0)}×${(Math.sqrt(openingArea)*100).toFixed(0)} cm)</li>
-                        <li>Oder Stoßlüftung: 10-15 min/h (ASchG §28)</li>
-                    </ul>
-                `;
+            // 2er-Kombinationen
+            for (let i = 0; i < STANDARD_CYLINDERS.length; i++) {
+                for (let j = i; j < STANDARD_CYLINDERS.length; j++) {
+                    const sum = STANDARD_CYLINDERS[i] + STANDARD_CYLINDERS[j];
+                    if (sum <= maxKg) {
+                        results.push({
+                            cylinders: [STANDARD_CYLINDERS[i], STANDARD_CYLINDERS[j]],
+                            total: sum,
+                            count: 2
+                        });
+                    }
+                }
             }
+            
+            // 3er-Kombinationen (nur bis 50kg)
+            for (let i = 0; i < STANDARD_CYLINDERS.length; i++) {
+                for (let j = i; j < STANDARD_CYLINDERS.length; j++) {
+                    for (let k = j; k < STANDARD_CYLINDERS.length; k++) {
+                        const sum = STANDARD_CYLINDERS[i] + STANDARD_CYLINDERS[j] + STANDARD_CYLINDERS[k];
+                        if (sum <= Math.min(maxKg, 50)) {
+                            results.push({
+                                cylinders: [STANDARD_CYLINDERS[i], STANDARD_CYLINDERS[j], STANDARD_CYLINDERS[k]],
+                                total: sum,
+                                count: 3
+                            });
+                        }
+                    }
+                }
+            }
+            
+            // Ergebnisse filtern und sortieren
+            return results
+                .filter(comb => comb.total >= target * 0.8) // Mindestens 80% des Bedarfs
+                .sort((a, b) => a.total - b.total)
+                .slice(0, 6); // Maximal 6 beste Kombinationen anzeigen
         }
 
         function generatePDF() {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF({
-                orientation: 'portrait',
-                unit: 'mm',
-                format: 'a4'
-            });
+            const doc = new jsPDF();
             
-            // Dokumentenmetadaten
-            doc.setProperties({
-                title: 'CO₂-Sicherheitsbericht',
-                subject: 'Berechnung nach österreichischen Normen',
-                author: 'CO₂-Sicherheitsrechner',
-                keywords: 'CO2, Sicherheit, Österreich, ASchG, ÖNORM',
-                creator: 'Technischer Sicherheitsrechner'
-            });
+            // PDF-Inhalt erstellen
+            doc.text("CO₂-Sicherheitsbericht (Österreich)", 105, 15, {align: 'center'});
+            doc.text(`Erstellt am: ${new Date().toLocaleDateString('de-AT')}`, 105, 22, {align: 'center'});
             
-            // Maximale Schriftgröße 11pt wie gewünscht
-            const maxFontSize = 11;
+            // Ergebnisse einfügen
+            const safetyText = document.getElementById('safetyResult').innerText;
+            doc.text(safetyText, 15, 40);
             
-            // Titel
-            doc.setFontSize(maxFontSize - 1);
-            doc.setTextColor(40);
-            doc.setFont('helvetica', 'bold');
-            doc.text('CO₂-SICHERHEITSBERICHT (ÖSTERREICH)', 105, 20, { align: 'center' });
+            // Flaschenkombinationen
+            doc.text("Empfohlene Flaschenkombinationen:", 15, 80);
+            const combinations = document.querySelectorAll('.combination');
+            let yPos = 90;
             
-            // Untertitel
-            doc.setFontSize(maxFontSize - 3);
-            doc.setTextColor(100);
-            doc.setFont('helvetica', 'normal');
-            doc.text('Berechnung gemäß ASchG, AAV und ÖNORM', 105, 26, { align: 'center' });
-            
-            // Datum
-            doc.text(`Erstellt am: ${new Date().toLocaleDateString('de-AT')}`, 105, 32, { align: 'center' });
-            
-            // Linie
-            doc.setDrawColor(200);
-            doc.line(20, 36, 190, 36);
-            
-            // Eingabedaten
-            doc.setFontSize(maxFontSize - 2);
-            doc.setTextColor(40);
-            doc.setFont('helvetica', 'bold');
-            doc.text('1. EINGABEPARAMETER', 20, 45);
-            
-            doc.setFontSize(maxFontSize - 3);
-            doc.setFont('helvetica', 'normal');
-            const inputs = [
-                `Füllmenge: ${document.getElementById('fillAmount').value} kg CO₂`,
-                `Raumabmessungen: ${document.getElementById('roomLength').value} m × ${document.getElementById('roomWidth').value} m × ${document.getElementById('roomHeight').value} m`,
-                `Raumvolumen: ${(document.getElementById('roomLength').value * document.getElementById('roomWidth').value * document.getElementById('roomHeight').value).toFixed(1)} m³`,
-                `Möblierung: ${document.getElementById('furniture').options[document.getElementById('furniture').selectedIndex].text}`,
-                `Belüftungstyp: ${document.getElementById('ventilation').options[document.getElementById('ventilation').selectedIndex].text}`
-            ];
-            
-            inputs.forEach((item, index) => {
-                doc.text(item, 25, 55 + (index * 6));
-            });
-            
-            // Ergebnisse
-            doc.setFontSize(maxFontSize - 2);
-            doc.setFont('helvetica', 'bold');
-            doc.text('2. ERGEBNISSE', 20, 85);
-            doc.setFont('helvetica', 'normal');
-            
-            const resultContainer = document.getElementById('resultContainer');
-            const resultLines = resultContainer.innerText.split('\n').filter(line => line.trim() !== '');
-            
-            let yPosition = 95;
-            resultLines.forEach(line => {
-                if (line.includes('✔️') || line.includes('⚠️')) {
-                    doc.setTextColor(line.includes('✔️') ? '#27ae60' : '#e74c3c');
-                    doc.setFontSize(maxFontSize - 2);
-                } else {
-                    doc.setTextColor(40);
-                    doc.setFontSize(maxFontSize - 3);
-                }
-                
-                if (yPosition > 270) {
+            combinations.forEach(comb => {
+                if (yPos > 250) {
                     doc.addPage();
-                    yPosition = 20;
+                    yPos = 20;
                 }
-                
-                doc.text(line, 25, yPosition, { maxWidth: 160 });
-                yPosition += line.length > 60 ? 12 : 6;
+                doc.text(comb.innerText, 20, yPos);
+                yPos += 10;
             });
-            
-            // Rechtsgrundlagen
-            doc.addPage();
-            doc.setFontSize(maxFontSize - 2);
-            doc.setTextColor(40);
-            doc.setFont('helvetica', 'bold');
-            doc.text('3. RECHTSGRUNDLAGEN (ÖSTERREICH)', 20, 20);
-            
-            doc.setFontSize(maxFontSize - 3);
-            doc.setFont('helvetica', 'normal');
-            const laws = [
-                '• ArbeitnehmerInnenschutzgesetz (ASchG)',
-                '• Allgemeine Arbeitnehmerschutzverordnung (AAV)',
-                '• ÖNORM EN 13779 - Lüftung von Nichtwohngebäuden',
-                '• ÖNORM M 7340-7344 - Gasflaschennormen',
-                '• TRGS 510 - Technische Regeln für Gefahrstoffe',
-                '• Chemikalienverordnung (ChemV)'
-            ];
-            
-            laws.forEach((law, index) => {
-                doc.text(law, 25, 30 + (index * 7));
-            });
-            
-            // Footer
-            doc.setFontSize(maxFontSize - 4);
-            doc.setTextColor(100);
-            doc.text('Dieser Bericht dient als technische Orientierungshilfe. Für verbindliche Bewertungen konsultieren Sie bitte', 105, 280, { align: 'center' });
-            doc.text('einen zertifizierten Sicherheitsexperten gemäß österreichischem Recht.', 105, 285, { align: 'center' });
             
             // Speichern
-            doc.save(`CO2-Sicherheitsbericht_${new Date().toISOString().slice(0,10)}.pdf`);
+            doc.save(`CO2-Bericht_${new Date().toISOString().slice(0,10)}.pdf`);
         }
     </script>
 </body>
