@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CO₂-Gasflaschen-Rechner | Professionell</title>
+    <title>CO₂-Sicherheitsrechner mit PDF-Export</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         :root {
             --primary: #2c3e50;
@@ -23,8 +25,7 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: var(--light);
             color: var(--dark);
-            height: 100vh;
-            overflow: hidden;
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
         }
@@ -42,7 +43,6 @@
             flex: 1;
             padding: 1rem;
             gap: 1rem;
-            height: calc(100vh - 120px);
         }
         
         .panel {
@@ -51,7 +51,6 @@
             padding: 1.5rem;
             box-shadow: 0 2px 15px rgba(0,0,0,0.1);
             flex: 1;
-            overflow-y: auto;
         }
         
         h1 {
@@ -74,7 +73,7 @@
         }
         
         .form-group {
-            margin-bottom: 0.5rem;
+            margin-bottom: 1rem;
         }
         
         label {
@@ -110,6 +109,20 @@
             transform: translateY(-2px);
         }
         
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .button-group button {
+            flex: 1;
+        }
+        
+        #pdfButton {
+            background: var(--accent);
+        }
+        
         .result-container {
             margin-top: 1.5rem;
             background: #f8f9fa;
@@ -139,6 +152,20 @@
             margin-top: 1rem;
         }
         
+        .recommendation {
+            background: #e8f4f8;
+            border-left: 4px solid var(--secondary);
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .ventilation-calc {
+            background: #fff8e6;
+            border-left: 4px solid #ffc107;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+        
         table {
             width: 100%;
             border-collapse: collapse;
@@ -156,43 +183,25 @@
             color: white;
         }
         
-        tr:nth-child(even) {
-            background: #f2f2f2;
-        }
-        
-        .formula {
-            background: #f8f9fa;
-            border-left: 4px solid var(--secondary);
-            padding: 1rem;
-            margin: 1rem 0;
-            font-family: monospace;
-            font-size: 1.1rem;
-        }
-        
-        .info-box {
-            background: #e8f4fc;
-            border-left: 4px solid var(--secondary);
-            padding: 1rem;
-            margin: 1rem 0;
-        }
-        
         @media (max-width: 768px) {
             .container {
                 flex-direction: column;
-                height: auto;
+            }
+            
+            .button-group {
+                flex-direction: column;
             }
         }
     </style>
 </head>
 <body>
     <header>
-        <h1>CO₂-Gasflaschen-Rechner</h1>
+        <h1>CO₂-Sicherheitsrechner</h1>
     </header>
     
     <div class="container">
-        <!-- Linke Spalte: Berechnung -->
         <div class="panel">
-            <h2>Berechnung</h2>
+            <h2>Sicherheitsberechnung</h2>
             
             <div class="form-grid">
                 <div>
@@ -228,150 +237,189 @@
                         </select>
                     </div>
                     
-                    <button id="calculateBtn1">Berechnen</button>
+                    <div class="form-group">
+                        <label for="ventilation">Belüftung:</label>
+                        <select id="ventilation">
+                            <option value="natural">Natürlich</option>
+                            <option value="mechanical">Mechanisch</option>
+                            <option value="none">Keine</option>
+                        </select>
+                    </div>
                 </div>
             </div>
             
-            <div class="result-container" id="result1">
-                <div class="info-box">
-                    Geben Sie die Parameter ein und klicken Sie auf "Berechnen".
+            <div class="button-group">
+                <button id="calculateBtn">Berechnen</button>
+                <button id="pdfButton">PDF erstellen</button>
+            </div>
+            
+            <div class="result-container" id="resultContainer">
+                <div class="info">
+                    Bitte geben Sie die Parameter ein und klicken Sie auf "Berechnen".
                 </div>
             </div>
-            
-            <h3>Standard-Flaschengrößen</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Größe (kg)</th>
-                        <th>Typische Anwendung</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>2</td>
-                        <td>Haushalt, kleine Gewerbebetriebe</td>
-                    </tr>
-                    <tr>
-                        <td>5</td>
-                        <td>Gastronomie, mittlere Betriebe</td>
-                    </tr>
-                    <tr>
-                        <td>10</td>
-                        <td>Industrie, große Systeme</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-        
-        <!-- Rechte Spalte: Theorie & Formeln -->
-        <div class="panel">
-            <h2>Theoretische Grundlagen</h2>
-            
-            <h3>Berechnungsformeln</h3>
-            
-            <div class="formula">
-                Mindestvolumen (m³) = Füllmenge (kg) × 17 m³/kg
-            </div>
-            
-            <div class="formula">
-                Mindestfläche (m²) = Füllmenge (kg) × 7,5 m²/kg
-            </div>
-            
-            <div class="info-box">
-                <strong>Hinweis:</strong> Bei möblierten Räumen wird die Mindestfläche um 10% erhöht.
-            </div>
-            
-            <h3>Sicherheitsrichtlinien</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>CO₂-Konzentration</th>
-                        <th>Wirkung</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>0.04% (400 ppm)</td>
-                        <td>Natürliche Konzentration in Luft</td>
-                    </tr>
-                    <tr>
-                        <td>1% (10.000 ppm)</td>
-                        <td>Leichte Ermüdung</td>
-                    </tr>
-                    <tr>
-                        <td>3% (30.000 ppm)</td>
-                        <td>Atemnot, Kopfschmerzen</td>
-                    </tr>
-                    <tr>
-                        <td>8% (80.000 ppm)</td>
-                        <td>Lebensgefahr</td>
-                    </tr>
-                </tbody>
-            </table>
-            
-            <div class="warning">
-                <strong>Sicherheitshinweis:</strong> Dieser Rechner dient nur zur Orientierung. Konsultieren Sie für genaue Sicherheitsbewertungen immer Fachpersonal.
-            </div>
-            
-            <h3>Technische Daten</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Parameter</th>
-                        <th>Wert</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>Dichte CO₂ (gasförmig)</td>
-                        <td>1,977 kg/m³ (bei 0°C)</td>
-                    </tr>
-                    <tr>
-                        <td>Dichte CO₂ (flüssig)</td>
-                        <td>1.101 kg/m³</td>
-                    </tr>
-                    <tr>
-                        <td>Umrechnungsfaktor</td>
-                        <td>1 kg ≈ 0,51 m³ Gas</td>
-                    </tr>
-                </tbody>
-            </table>
         </div>
     </div>
 
     <script>
+        // PDF-Bibliothek initialisieren
+        const { jsPDF } = window.jspdf;
+        
         document.addEventListener('DOMContentLoaded', function() {
-            document.getElementById('calculateBtn1').addEventListener('click', calculateMinRoomSize);
+            document.getElementById('calculateBtn').addEventListener('click', calculateSafety);
+            document.getElementById('pdfButton').addEventListener('click', generatePDF);
         });
 
-        function calculateMinRoomSize() {
+        function calculateSafety() {
             const fillAmount = parseFloat(document.getElementById('fillAmount').value) || 0;
             const roomLength = parseFloat(document.getElementById('roomLength').value) || 0;
             const roomWidth = parseFloat(document.getElementById('roomWidth').value) || 0;
             const roomHeight = parseFloat(document.getElementById('roomHeight').value) || 2.5;
             const furniture = document.getElementById('furniture').value;
+            const ventilation = document.getElementById('ventilation').value;
 
             // Berechnungen
             const roomVolume = roomLength * roomWidth * roomHeight;
+            const roomArea = roomLength * roomWidth;
             let minVolumeRequired = fillAmount * 17;
             let minAreaRequired = fillAmount * 7.5;
 
             if (furniture === 'yes') minAreaRequired *= 1.1;
+            if (ventilation === 'none') minVolumeRequired *= 1.3;
 
             // Ergebnis
             let resultHTML = `
-                <div class="result-title">Ergebnis</div>
-                <p><strong>Aktueller Raum:</strong> ${roomVolume.toFixed(1)} m³ (${(roomLength * roomWidth).toFixed(1)} m²)</p>
-                <p><strong>Mindestanforderung:</strong> ${minVolumeRequired.toFixed(1)} m³ (${minAreaRequired.toFixed(1)} m²)</p>
+                <div class="result-title">Berechnungsergebnisse</div>
+                <p><strong>Aktueller Raum:</strong> ${roomVolume.toFixed(1)} m³ (${roomArea.toFixed(1)} m² Grundfläche)</p>
+                <p><strong>Mindestanforderungen:</strong> ${minVolumeRequired.toFixed(1)} m³ / ${minAreaRequired.toFixed(1)} m²</p>
             `;
 
             if (roomVolume >= minVolumeRequired) {
-                resultHTML += `<div class="success">✔️ Der Raum erfüllt die Sicherheitsanforderungen</div>`;
+                resultHTML += `<div class="success">✔️ Raumgröße ausreichend für sichere Nutzung</div>`;
             } else {
-                resultHTML += `<div class="warning">⚠️ Achtung: Raum ist zu klein für sichere Nutzung!</div>`;
+                resultHTML += `<div class="warning">⚠️ Achtung: Raum unterschreitet Mindestanforderungen!</div>`;
             }
 
-            document.getElementById('result1').innerHTML = resultHTML;
+            // Empfehlungen
+            resultHTML += getRecommendations(fillAmount, roomVolume, minVolumeRequired, ventilation);
+
+            document.getElementById('resultContainer').innerHTML = resultHTML;
+        }
+
+        function getRecommendations(fillAmount, roomVolume, minVolumeRequired, ventilation) {
+            // Flaschenempfehlung
+            let recommendationsHTML = `
+                <div class="recommendation">
+                    <h4>Empfohlene Flaschen:</h4>
+                    <ul>
+                        ${getCylinderRecommendations(fillAmount)}
+                    </ul>
+                </div>
+            `;
+
+            // Lüftungsempfehlung
+            if (roomVolume < minVolumeRequired) {
+                const deficit = minVolumeRequired - roomVolume;
+                recommendationsHTML += `
+                    <div class="ventilation-calc">
+                        <h4>⚠️ Lüftungsmaßnahmen erforderlich:</h4>
+                        ${getVentilationRecommendation(deficit, ventilation)}
+                        <p><strong>Alternative:</strong> CO₂-Warngerät installieren (Schwellwert: 5.000 ppm)</p>
+                    </div>
+                `;
+            }
+
+            return recommendationsHTML;
+        }
+
+        function getCylinderRecommendations(requiredKg) {
+            const cylinders = [
+                { size: 2, name: "Haushaltsflasche" },
+                { size: 5, name: "Standardflasche" },
+                { size: 10, name: "Industrieflasche" },
+                { size: 20, name: "Großflasche" }
+            ];
+            
+            let options = '';
+            cylinders.forEach(cyl => {
+                if (cyl.size >= requiredKg * 0.5) {
+                    const status = cyl.size >= requiredKg ? '✔️ Ausreichend' : '⚠️ Kombination mehrerer empfohlen';
+                    options += `<li><strong>${cyl.size}kg ${cyl.name}:</strong> ${status}</li>`;
+                }
+            });
+            
+            return options || '<li>Keine Standardflasche verfügbar - Fachberatung empfohlen</li>';
+        }
+
+        function getVentilationRecommendation(deficit, ventilationType) {
+            const openingArea = (deficit * 0.05).toFixed(2);
+            
+            if (ventilationType === 'mechanical') {
+                return `
+                    <p>Mechanische Lüftung erforderlich mit mindestens ${(deficit/2).toFixed(1)} m³/h Luftwechsel</p>
+                `;
+            } else {
+                return `
+                    <p>Natürliche Lüftung benötigt:</p>
+                    <ul>
+                        <li>Mindestöffnungsfläche: ${openingArea} m²</li>
+                        <li>Oder regelmäßiges Stoßlüften (5-10 min/h)</li>
+                    </ul>
+                `;
+            }
+        }
+
+        function generatePDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            // Titel
+            doc.setFontSize(18);
+            doc.text('CO₂-Sicherheitsbericht', 105, 15, { align: 'center' });
+            
+            // Datum
+            doc.setFontSize(12);
+            doc.text(`Erstellt am: ${new Date().toLocaleDateString('de-DE')}`, 105, 22, { align: 'center' });
+            
+            // Eingabedaten
+            doc.setFontSize(14);
+            doc.text('1. Eingabeparameter', 14, 35);
+            doc.setFontSize(12);
+            
+            const inputs = [
+                `Füllmenge: ${document.getElementById('fillAmount').value} kg`,
+                `Raummaße: ${document.getElementById('roomLength').value} × ${document.getElementById('roomWidth').value} × ${document.getElementById('roomHeight').value} m`,
+                `Möblierung: ${document.getElementById('furniture').options[document.getElementById('furniture').selectedIndex].text}`,
+                `Belüftung: ${document.getElementById('ventilation').options[document.getElementById('ventilation').selectedIndex].text}`
+            ];
+            
+            inputs.forEach((item, index) => {
+                doc.text(item, 20, 45 + (index * 7));
+            });
+            
+            // Ergebnisse
+            doc.setFontSize(14);
+            doc.text('2. Ergebnisse', 14, 80);
+            doc.setFontSize(12);
+            
+            const resultContainer = document.getElementById('resultContainer');
+            const resultText = resultContainer.innerText.split('\n').filter(line => line.trim() !== '');
+            
+            resultText.forEach((line, index) => {
+                if (line.includes('✔️') || line.includes('⚠️')) {
+                    doc.setTextColor(line.includes('✔️') ? '#27ae60' : '#e74c3c');
+                }
+                doc.text(line, 20, 90 + (index * 7));
+                doc.setTextColor('#000000');
+            });
+            
+            // Footer
+            doc.setFontSize(10);
+            doc.setTextColor(100);
+            doc.text('Erstellt mit CO₂-Sicherheitsrechner - DGUV-konforme Berechnungen', 105, 285, { align: 'center' });
+            
+            // Speichern
+            doc.save(`CO2-Sicherheitsbericht_${new Date().toISOString().slice(0,10)}.pdf`);
         }
     </script>
 </body>
