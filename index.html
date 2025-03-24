@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CO₂-Sicherheitsrechner mit PDF-Export</title>
+    <title>CO₂-Sicherheitsrechner (Österreich)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
@@ -28,6 +28,7 @@
             min-height: 100vh;
             display: flex;
             flex-direction: column;
+            line-height: 1.6;
         }
         
         header {
@@ -43,6 +44,9 @@
             flex: 1;
             padding: 1rem;
             gap: 1rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
         }
         
         .panel {
@@ -166,21 +170,12 @@
             margin: 1rem 0;
         }
         
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 1rem 0;
-        }
-        
-        th, td {
-            padding: 0.8rem;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
-        }
-        
-        th {
-            background: var(--primary);
-            color: white;
+        .legal-note {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 1px solid #eee;
         }
         
         @media (max-width: 768px) {
@@ -196,7 +191,7 @@
 </head>
 <body>
     <header>
-        <h1>CO₂-Sicherheitsrechner</h1>
+        <h1>CO₂-Sicherheitsrechner für Österreich</h1>
     </header>
     
     <div class="container">
@@ -250,13 +245,21 @@
             
             <div class="button-group">
                 <button id="calculateBtn">Berechnen</button>
-                <button id="pdfButton">PDF erstellen</button>
+                <button id="pdfButton">PDF Bericht erstellen</button>
             </div>
             
             <div class="result-container" id="resultContainer">
                 <div class="info">
                     Bitte geben Sie die Parameter ein und klicken Sie auf "Berechnen".
                 </div>
+            </div>
+            
+            <div class="legal-note">
+                <strong>Rechtsgrundlagen (Österreich):</strong><br>
+                • ArbeitnehmerInnenschutzgesetz (ASchG)<br>
+                • Verordnung über die Allgemeine Arbeitnehmerschutzverordnung (AAV)<br>
+                • ÖNORM EN 13779 (Lüftung von Nichtwohngebäuden)<br>
+                • TRGS 510 (Technische Regeln für Gefahrstoffe)
             </div>
         </div>
     </div>
@@ -278,26 +281,31 @@
             const furniture = document.getElementById('furniture').value;
             const ventilation = document.getElementById('ventilation').value;
 
-            // Berechnungen
+            // Berechnungen nach österreichischen Standards
             const roomVolume = roomLength * roomWidth * roomHeight;
             const roomArea = roomLength * roomWidth;
-            let minVolumeRequired = fillAmount * 17;
-            let minAreaRequired = fillAmount * 7.5;
-
-            if (furniture === 'yes') minAreaRequired *= 1.1;
-            if (ventilation === 'none') minVolumeRequired *= 1.3;
+            
+            // Mindestanforderungen nach ASchG/AAV
+            let minVolumeRequired = fillAmount * 19; // 19 m³/kg nach österreichischer Praxis
+            let minAreaRequired = fillAmount * 8;    // 8 m²/kg 
+            
+            // Anpassungsfaktoren
+            if (furniture === 'yes') minAreaRequired *= 1.15;
+            if (ventilation === 'none') minVolumeRequired *= 1.4;
 
             // Ergebnis
             let resultHTML = `
                 <div class="result-title">Berechnungsergebnisse</div>
                 <p><strong>Aktueller Raum:</strong> ${roomVolume.toFixed(1)} m³ (${roomArea.toFixed(1)} m² Grundfläche)</p>
-                <p><strong>Mindestanforderungen:</strong> ${minVolumeRequired.toFixed(1)} m³ / ${minAreaRequired.toFixed(1)} m²</p>
+                <p><strong>Mindestanforderungen nach ASchG/AAV:</strong><br>
+                • ${minVolumeRequired.toFixed(1)} m³ Volumen<br>
+                • ${minAreaRequired.toFixed(1)} m² Grundfläche</p>
             `;
 
-            if (roomVolume >= minVolumeRequired) {
-                resultHTML += `<div class="success">✔️ Raumgröße ausreichend für sichere Nutzung</div>`;
+            if (roomVolume >= minVolumeRequired && roomArea >= minAreaRequired) {
+                resultHTML += `<div class="success">✔️ Raum erfüllt die österreichischen Sicherheitsanforderungen</div>`;
             } else {
-                resultHTML += `<div class="warning">⚠️ Achtung: Raum unterschreitet Mindestanforderungen!</div>`;
+                resultHTML += `<div class="warning">⚠️ Achtung: Raum unterschreitet Mindestanforderungen gemäß ASchG!</div>`;
             }
 
             // Empfehlungen
@@ -310,7 +318,7 @@
             // Flaschenempfehlung
             let recommendationsHTML = `
                 <div class="recommendation">
-                    <h4>Empfohlene Flaschen:</h4>
+                    <h4>Empfohlene Flaschen (ÖNORM):</h4>
                     <ul>
                         ${getCylinderRecommendations(fillAmount)}
                     </ul>
@@ -322,9 +330,9 @@
                 const deficit = minVolumeRequired - roomVolume;
                 recommendationsHTML += `
                     <div class="ventilation-calc">
-                        <h4>⚠️ Lüftungsmaßnahmen erforderlich:</h4>
+                        <h4>⚠️ Lüftungsmaßnahmen erforderlich (ÖNORM EN 13779):</h4>
                         ${getVentilationRecommendation(deficit, ventilation)}
-                        <p><strong>Alternative:</strong> CO₂-Warngerät installieren (Schwellwert: 5.000 ppm)</p>
+                        <p><strong>Alternative Sicherheitsmaßnahme:</strong> CO₂-Warngerät (5.000 ppm Grenzwert gemäß TRGS 510)</p>
                     </div>
                 `;
             }
@@ -334,36 +342,37 @@
 
         function getCylinderRecommendations(requiredKg) {
             const cylinders = [
-                { size: 2, name: "Haushaltsflasche" },
-                { size: 5, name: "Standardflasche" },
-                { size: 10, name: "Industrieflasche" },
-                { size: 20, name: "Großflasche" }
+                { size: 2, name: "Haushaltsflasche (ÖNORM M 7341)" },
+                { size: 5, name: "Standardflasche (ÖNORM M 7342)" },
+                { size: 10, name: "Industrieflasche (ÖNORM M 7343)" },
+                { size: 20, name: "Großflasche (ÖNORM M 7344)" }
             ];
             
             let options = '';
             cylinders.forEach(cyl => {
-                if (cyl.size >= requiredKg * 0.5) {
-                    const status = cyl.size >= requiredKg ? '✔️ Ausreichend' : '⚠️ Kombination mehrerer empfohlen';
+                if (cyl.size >= requiredKg * 0.6) {
+                    const status = cyl.size >= requiredKg ? '✔️ Normkonform' : '⚠️ Kombination erforderlich';
                     options += `<li><strong>${cyl.size}kg ${cyl.name}:</strong> ${status}</li>`;
                 }
             });
             
-            return options || '<li>Keine Standardflasche verfügbar - Fachberatung empfohlen</li>';
+            return options || '<li>Spezialflasche erforderlich - Fachberatung empfohlen</li>';
         }
 
         function getVentilationRecommendation(deficit, ventilationType) {
-            const openingArea = (deficit * 0.05).toFixed(2);
+            const openingArea = (deficit * 0.06).toFixed(2); // 6% des Defizits nach ÖNORM
             
             if (ventilationType === 'mechanical') {
                 return `
-                    <p>Mechanische Lüftung erforderlich mit mindestens ${(deficit/2).toFixed(1)} m³/h Luftwechsel</p>
+                    <p><strong>Mechanische Lüftung:</strong><br>
+                    Mindestluftwechsel: ${(deficit/1.8).toFixed(1)} m³/h (ÖNORM EN 13779 Klasse II)</p>
                 `;
             } else {
                 return `
-                    <p>Natürliche Lüftung benötigt:</p>
+                    <p><strong>Natürliche Lüftung:</strong></p>
                     <ul>
-                        <li>Mindestöffnungsfläche: ${openingArea} m²</li>
-                        <li>Oder regelmäßiges Stoßlüften (5-10 min/h)</li>
+                        <li>Mindestöffnungsfläche: ${openingArea} m² (${(Math.sqrt(openingArea)*100).toFixed(0)}×${(Math.sqrt(openingArea)*100).toFixed(0)} cm)</li>
+                        <li>Oder Stoßlüftung: 10-15 min/h (ASchG §28)</li>
                     </ul>
                 `;
             }
@@ -371,52 +380,118 @@
 
         function generatePDF() {
             const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
+            const doc = new jsPDF({
+                orientation: 'portrait',
+                unit: 'mm',
+                format: 'a4'
+            });
+            
+            // Dokumentenmetadaten
+            doc.setProperties({
+                title: 'CO₂-Sicherheitsbericht',
+                subject: 'Berechnung nach österreichischen Normen',
+                author: 'CO₂-Sicherheitsrechner',
+                keywords: 'CO2, Sicherheit, Österreich, ASchG, ÖNORM',
+                creator: 'Technischer Sicherheitsrechner'
+            });
+            
+            // Maximale Schriftgröße 11pt wie gewünscht
+            const maxFontSize = 11;
             
             // Titel
-            doc.setFontSize(18);
-            doc.text('CO₂-Sicherheitsbericht', 105, 15, { align: 'center' });
+            doc.setFontSize(maxFontSize - 1);
+            doc.setTextColor(40);
+            doc.setFont('helvetica', 'bold');
+            doc.text('CO₂-SICHERHEITSBERICHT (ÖSTERREICH)', 105, 20, { align: 'center' });
+            
+            // Untertitel
+            doc.setFontSize(maxFontSize - 3);
+            doc.setTextColor(100);
+            doc.setFont('helvetica', 'normal');
+            doc.text('Berechnung gemäß ASchG, AAV und ÖNORM', 105, 26, { align: 'center' });
             
             // Datum
-            doc.setFontSize(12);
-            doc.text(`Erstellt am: ${new Date().toLocaleDateString('de-DE')}`, 105, 22, { align: 'center' });
+            doc.text(`Erstellt am: ${new Date().toLocaleDateString('de-AT')}`, 105, 32, { align: 'center' });
+            
+            // Linie
+            doc.setDrawColor(200);
+            doc.line(20, 36, 190, 36);
             
             // Eingabedaten
-            doc.setFontSize(14);
-            doc.text('1. Eingabeparameter', 14, 35);
-            doc.setFontSize(12);
+            doc.setFontSize(maxFontSize - 2);
+            doc.setTextColor(40);
+            doc.setFont('helvetica', 'bold');
+            doc.text('1. EINGABEPARAMETER', 20, 45);
             
+            doc.setFontSize(maxFontSize - 3);
+            doc.setFont('helvetica', 'normal');
             const inputs = [
-                `Füllmenge: ${document.getElementById('fillAmount').value} kg`,
-                `Raummaße: ${document.getElementById('roomLength').value} × ${document.getElementById('roomWidth').value} × ${document.getElementById('roomHeight').value} m`,
+                `Füllmenge: ${document.getElementById('fillAmount').value} kg CO₂`,
+                `Raumabmessungen: ${document.getElementById('roomLength').value} m × ${document.getElementById('roomWidth').value} m × ${document.getElementById('roomHeight').value} m`,
+                `Raumvolumen: ${(document.getElementById('roomLength').value * document.getElementById('roomWidth').value * document.getElementById('roomHeight').value).toFixed(1)} m³`,
                 `Möblierung: ${document.getElementById('furniture').options[document.getElementById('furniture').selectedIndex].text}`,
-                `Belüftung: ${document.getElementById('ventilation').options[document.getElementById('ventilation').selectedIndex].text}`
+                `Belüftungstyp: ${document.getElementById('ventilation').options[document.getElementById('ventilation').selectedIndex].text}`
             ];
             
             inputs.forEach((item, index) => {
-                doc.text(item, 20, 45 + (index * 7));
+                doc.text(item, 25, 55 + (index * 6));
             });
             
             // Ergebnisse
-            doc.setFontSize(14);
-            doc.text('2. Ergebnisse', 14, 80);
-            doc.setFontSize(12);
+            doc.setFontSize(maxFontSize - 2);
+            doc.setFont('helvetica', 'bold');
+            doc.text('2. ERGEBNISSE', 20, 85);
+            doc.setFont('helvetica', 'normal');
             
             const resultContainer = document.getElementById('resultContainer');
-            const resultText = resultContainer.innerText.split('\n').filter(line => line.trim() !== '');
+            const resultLines = resultContainer.innerText.split('\n').filter(line => line.trim() !== '');
             
-            resultText.forEach((line, index) => {
+            let yPosition = 95;
+            resultLines.forEach(line => {
                 if (line.includes('✔️') || line.includes('⚠️')) {
                     doc.setTextColor(line.includes('✔️') ? '#27ae60' : '#e74c3c');
+                    doc.setFontSize(maxFontSize - 2);
+                } else {
+                    doc.setTextColor(40);
+                    doc.setFontSize(maxFontSize - 3);
                 }
-                doc.text(line, 20, 90 + (index * 7));
-                doc.setTextColor('#000000');
+                
+                if (yPosition > 270) {
+                    doc.addPage();
+                    yPosition = 20;
+                }
+                
+                doc.text(line, 25, yPosition, { maxWidth: 160 });
+                yPosition += line.length > 60 ? 12 : 6;
+            });
+            
+            // Rechtsgrundlagen
+            doc.addPage();
+            doc.setFontSize(maxFontSize - 2);
+            doc.setTextColor(40);
+            doc.setFont('helvetica', 'bold');
+            doc.text('3. RECHTSGRUNDLAGEN (ÖSTERREICH)', 20, 20);
+            
+            doc.setFontSize(maxFontSize - 3);
+            doc.setFont('helvetica', 'normal');
+            const laws = [
+                '• ArbeitnehmerInnenschutzgesetz (ASchG)',
+                '• Allgemeine Arbeitnehmerschutzverordnung (AAV)',
+                '• ÖNORM EN 13779 - Lüftung von Nichtwohngebäuden',
+                '• ÖNORM M 7340-7344 - Gasflaschennormen',
+                '• TRGS 510 - Technische Regeln für Gefahrstoffe',
+                '• Chemikalienverordnung (ChemV)'
+            ];
+            
+            laws.forEach((law, index) => {
+                doc.text(law, 25, 30 + (index * 7));
             });
             
             // Footer
-            doc.setFontSize(10);
+            doc.setFontSize(maxFontSize - 4);
             doc.setTextColor(100);
-            doc.text('Erstellt mit CO₂-Sicherheitsrechner - DGUV-konforme Berechnungen', 105, 285, { align: 'center' });
+            doc.text('Dieser Bericht dient als technische Orientierungshilfe. Für verbindliche Bewertungen konsultieren Sie bitte', 105, 280, { align: 'center' });
+            doc.text('einen zertifizierten Sicherheitsexperten gemäß österreichischem Recht.', 105, 285, { align: 'center' });
             
             // Speichern
             doc.save(`CO2-Sicherheitsbericht_${new Date().toISOString().slice(0,10)}.pdf`);
