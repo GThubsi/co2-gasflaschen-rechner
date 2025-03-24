@@ -24,6 +24,11 @@
             text-align: center;
             color: #007BFF;
         }
+        h2 {
+            color: #0056b3;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+        }
         .form-group {
             margin-bottom: 15px;
         }
@@ -48,15 +53,28 @@
             border-radius: 4px;
             cursor: pointer;
             font-size: 16px;
+            margin-top: 10px;
         }
         button:hover {
             background-color: #0056b3;
         }
         .result {
             margin-top: 20px;
-            padding: 10px;
+            padding: 15px;
             background-color: #e9ecef;
             border-radius: 4px;
+            line-height: 1.6;
+        }
+        .warning {
+            background-color: #fff3cd;
+            color: #856404;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 15px;
+        }
+        .tooltip {
+            font-size: 0.9em;
+            color: #666;
         }
     </style>
 </head>
@@ -68,18 +86,34 @@
         <div id="form1">
             <h2>Mindestraumgröße berechnen</h2>
             <div class="form-group">
-                <label for="fillAmount">Füllmenge der CO₂-Flasche in kg:</label>
-                <input type="number" id="fillAmount" step="0.1">
+                <label for="fillAmount">Füllmenge der CO₂-Flasche (kg):</label>
+                <input type="number" id="fillAmount" step="0.1" min="0.1">
+                <span class="tooltip">Typische Werte: 2 kg (Haushalt), 10 kg (Gewerbe)</span>
             </div>
             <div class="form-group">
-                <label for="roomHeight">Raumhöhe in m:</label>
-                <input type="number" id="roomHeight" step="0.1">
+                <label for="roomLength">Raumlänge (m):</label>
+                <input type="number" id="roomLength" step="0.1" min="1">
             </div>
             <div class="form-group">
-                <label for="furniture">Möbel im Raum:</label>
+                <label for="roomWidth">Raumbreite (m):</label>
+                <input type="number" id="roomWidth" step="0.1" min="1">
+            </div>
+            <div class="form-group">
+                <label for="roomHeight">Raumhöhe (m):</label>
+                <input type="number" id="roomHeight" step="0.1" min="1.5" value="2.5">
+            </div>
+            <div class="form-group">
+                <label for="furniture">Möblierung:</label>
                 <select id="furniture">
-                    <option value="no">Nein</option>
-                    <option value="yes">Ja</option>
+                    <option value="no">Keine Möbel</option>
+                    <option value="yes" selected>Möbliert</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="ventilation">Belüftung:</label>
+                <select id="ventilation">
+                    <option value="good">Gut (Fenster/Türen vorhanden)</option>
+                    <option value="poor">Schlecht (keine Lüftung)</option>
                 </select>
             </div>
             <button onclick="calculateMinRoomSize()">Berechnen</button>
@@ -90,50 +124,118 @@
         <div id="form2">
             <h2>Maximale nutzbare CO₂-Gasflasche berechnen</h2>
             <div class="form-group">
-                <label for="area">Vorhandene Fläche in m²:</label>
-                <input type="number" id="area" step="0.1">
+                <label for="roomLength2">Raumlänge (m):</label>
+                <input type="number" id="roomLength2" step="0.1" min="1">
             </div>
             <div class="form-group">
-                <label for="roomHeight2">Raumhöhe in m:</label>
-                <input type="number" id="roomHeight2" step="0.1">
+                <label for="roomWidth2">Raumbreite (m):</label>
+                <input type="number" id="roomWidth2" step="0.1" min="1">
+            </div>
+            <div class="form-group">
+                <label for="roomHeight2">Raumhöhe (m):</label>
+                <input type="number" id="roomHeight2" step="0.1" min="1.5" value="2.5">
+            </div>
+            <div class="form-group">
+                <label for="furniture2">Möblierung:</label>
+                <select id="furniture2">
+                    <option value="no">Keine Möbel</option>
+                    <option value="yes" selected>Möbliert</option>
+                </select>
             </div>
             <button onclick="calculateMaxGasCylinder()">Berechnen</button>
             <div class="result" id="result2"></div>
+        </div>
+
+        <div class="warning">
+            <strong>Hinweis:</strong> Dieser Rechner dient als Richtwert. Für genaue Sicherheitsberechnungen konsultieren Sie bitte die DGUV Regel 112-190 oder einen Fachmann. CO₂ kann in hohen Konzentrationen lebensgefährlich sein!
         </div>
     </div>
 
     <script>
         function calculateMinRoomSize() {
+            // Eingabewerte
             const fillAmount = parseFloat(document.getElementById('fillAmount').value);
+            const roomLength = parseFloat(document.getElementById('roomLength').value);
+            const roomWidth = parseFloat(document.getElementById('roomWidth').value);
             const roomHeight = parseFloat(document.getElementById('roomHeight').value);
             const furniture = document.getElementById('furniture').value;
+            const ventilation = document.getElementById('ventilation').value;
 
-            let minRoomVolume = fillAmount * 17;
-            let minRoomArea = (fillAmount * 7.5).toFixed(2);
-
-            if (furniture === 'yes') {
-                minRoomArea = (fillAmount * 7.5 * 1.1).toFixed(2);
+            // Validierung
+            if (isNaN(fillAmount) || fillAmount <= 0) {
+                alert("Bitte eine gültige Füllmenge eingeben!");
+                return;
             }
 
-            document.getElementById('result1').innerHTML = `
-                <p><strong>Mindest-Raumgröße:</strong> ${minRoomVolume.toFixed(2)} m³</p>
-                <p><strong>Mindest-Raumfläche:</strong> ${minRoomArea} m²</p>
+            // Berechnungen
+            const roomVolume = roomLength * roomWidth * roomHeight;
+            const roomArea = roomLength * roomWidth;
+
+            // Mindestanforderungen nach DGUV Regel 112-190 (vereinfacht)
+            let minVolumeRequired = fillAmount * 17; // 17 m³ pro kg CO₂
+            let minAreaRequired = fillAmount * 7.5;   // 7.5 m² pro kg CO₂
+
+            // Korrekturfaktoren
+            if (furniture === 'yes') minAreaRequired *= 1.1; // +10% bei Möbeln
+            if (ventilation === 'poor') minVolumeRequired *= 1.2; // +20% bei schlechter Lüftung
+
+            // Ergebnisausgabe
+            let resultHTML = `
+                <p><strong>Aktueller Raum:</strong> ${roomVolume.toFixed(1)} m³ (${roomArea.toFixed(1)} m²)</p>
+                <p><strong>Mindestanforderung:</strong> ${minVolumeRequired.toFixed(1)} m³ (${minAreaRequired.toFixed(1)} m²)</p>
             `;
+
+            if (roomVolume >= minVolumeRequired && roomArea >= minAreaRequired) {
+                resultHTML += `<p style="color:green;">✔️ Der Raum erfüllt die Mindestanforderungen.</p>`;
+            } else {
+                resultHTML += `<p style="color:red;">⚠️ Der Raum ist zu klein! Risiko einer gefährlichen CO₂-Konzentration.</p>`;
+            }
+
+            document.getElementById('result1').innerHTML = resultHTML;
         }
 
         function calculateMaxGasCylinder() {
-            const area = parseFloat(document.getElementById('area').value);
+            // Eingabewerte
+            const roomLength = parseFloat(document.getElementById('roomLength2').value);
+            const roomWidth = parseFloat(document.getElementById('roomWidth2').value);
             const roomHeight = parseFloat(document.getElementById('roomHeight2').value);
+            const furniture = document.getElementById('furniture2').value;
 
-            let maxGasCylinder = (area * roomHeight * (0.03 / 0.51)).toFixed(2);
-
-            if (maxGasCylinder > 6 && maxGasCylinder < 10) {
-                maxGasCylinder = 6;
+            // Validierung
+            if (isNaN(roomLength) {
+                alert("Bitte gültige Raummaße eingeben!");
+                return;
             }
 
-            document.getElementById('result2').innerHTML = `
-                <p><strong>Maximale nutzbare CO₂-Gasflasche:</strong> ${maxGasCylinder} kg</p>
+            // Berechnungen
+            const roomVolume = roomLength * roomWidth * roomHeight;
+            const roomArea = roomLength * roomWidth;
+
+            // Maximale Flaschengröße berechnen (DGUV Regel 112-190)
+            let maxGasCylinder = (roomVolume / 17).toFixed(1); // 17 m³ pro kg CO₂
+
+            // Korrekturfaktoren
+            if (furniture === 'yes') maxGasCylinder = (maxGasCylinder / 1.1).toFixed(1);
+
+            // Praktische Limits (typische Flaschengrößen)
+            const commonSizes = [2, 5, 6, 10, 20, 50];
+            let recommendedSize = 0;
+            for (const size of commonSizes) {
+                if (size <= maxGasCylinder) recommendedSize = size;
+            }
+
+            // Ergebnisausgabe
+            let resultHTML = `
+                <p><strong>Raumvolumen:</strong> ${roomVolume.toFixed(1)} m³</p>
+                <p><strong>Maximal zulässige Flaschengröße:</strong> ${maxGasCylinder} kg</p>
+                <p><strong>Empfohlene Standardflasche:</strong> ${recommendedSize} kg</p>
             `;
+
+            if (maxGasCylinder < 2) {
+                resultHTML += `<p style="color:red;">⚠️ Raum zu klein für sichere Nutzung von CO₂-Flaschen!</p>`;
+            }
+
+            document.getElementById('result2').innerHTML = resultHTML;
         }
     </script>
 </body>
