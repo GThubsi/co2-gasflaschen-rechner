@@ -3,154 +3,348 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CO₂-Gasflaschen-Rechner</title>
+    <title>CO₂-Gasflaschen-Rechner | Professionell</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --accent: #e74c3c;
+            --light: #ecf0f1;
+            --dark: #2c3e50;
+        }
+        
+        * {
+            box-sizing: border-box;
             margin: 0;
-            padding: 20px;
-            background-color: #f4f4f9;
-            color: #333;
+            padding: 0;
         }
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--light);
+            color: var(--dark);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
-        h1 {
+        
+        header {
+            background: var(--primary);
+            color: white;
+            padding: 1rem;
             text-align: center;
-            color: #007BFF;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
         }
+        
+        .container {
+            display: flex;
+            flex: 1;
+            padding: 1rem;
+            gap: 1rem;
+            height: calc(100vh - 120px);
+        }
+        
+        .panel {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+            flex: 1;
+            overflow-y: auto;
+        }
+        
+        h1 {
+            color: white;
+            font-size: 1.8rem;
+        }
+        
         h2 {
-            color: #0056b3;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 5px;
+            color: var(--secondary);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--secondary);
         }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
         .form-group {
-            margin-bottom: 15px;
+            margin-bottom: 0.5rem;
         }
+        
         label {
             display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
+            margin-bottom: 0.3rem;
+            font-weight: 600;
+            color: var(--primary);
         }
+        
         input, select {
             width: 100%;
-            padding: 8px;
-            box-sizing: border-box;
-            border: 1px solid #ccc;
+            padding: 0.6rem;
+            border: 1px solid #ddd;
             border-radius: 4px;
+            font-size: 1rem;
         }
+        
         button {
-            width: 100%;
-            padding: 10px;
-            background-color: #007BFF;
+            background: var(--secondary);
             color: white;
             border: none;
+            padding: 0.8rem 1.5rem;
             border-radius: 4px;
             cursor: pointer;
-            font-size: 16px;
-            margin-top: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s;
+            margin-top: 0.5rem;
         }
+        
         button:hover {
-            background-color: #0056b3;
+            background: var(--primary);
+            transform: translateY(-2px);
         }
-        .result {
-            margin-top: 20px;
-            padding: 15px;
-            background-color: #e9ecef;
-            border-radius: 4px;
-            line-height: 1.6;
+        
+        .result-container {
+            margin-top: 1.5rem;
+            background: #f8f9fa;
+            border-radius: 6px;
+            padding: 1.2rem;
         }
-        .warning {
-            background-color: #fff3cd;
-            color: #856404;
-            padding: 10px;
-            border-radius: 4px;
-            margin-top: 15px;
+        
+        .result-title {
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
         }
+        
         .success {
-            background-color: #d4edda;
-            color: #155724;
-            padding: 10px;
+            color: #27ae60;
+            background: #e8f8f0;
+            padding: 0.8rem;
             border-radius: 4px;
-            margin-top: 15px;
+            margin-top: 1rem;
+        }
+        
+        .warning {
+            color: #e74c3c;
+            background: #fdedec;
+            padding: 0.8rem;
+            border-radius: 4px;
+            margin-top: 1rem;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+        
+        th, td {
+            padding: 0.8rem;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        th {
+            background: var(--primary);
+            color: white;
+        }
+        
+        tr:nth-child(even) {
+            background: #f2f2f2;
+        }
+        
+        .formula {
+            background: #f8f9fa;
+            border-left: 4px solid var(--secondary);
+            padding: 1rem;
+            margin: 1rem 0;
+            font-family: monospace;
+            font-size: 1.1rem;
+        }
+        
+        .info-box {
+            background: #e8f4fc;
+            border-left: 4px solid var(--secondary);
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+                height: auto;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
+    <header>
         <h1>CO₂-Gasflaschen-Rechner</h1>
-
-        <!-- Formular 1: Mindestraumgröße -->
-        <div id="form1">
-            <h2>Mindestraumgröße berechnen</h2>
-            <div class="form-group">
-                <label for="fillAmount">Füllmenge der CO₂-Flasche (kg):</label>
-                <input type="number" id="fillAmount" step="0.1" min="0.1" value="5">
+    </header>
+    
+    <div class="container">
+        <!-- Linke Spalte: Berechnung -->
+        <div class="panel">
+            <h2>Berechnung</h2>
+            
+            <div class="form-grid">
+                <div>
+                    <div class="form-group">
+                        <label for="fillAmount">Füllmenge (kg):</label>
+                        <input type="number" id="fillAmount" step="0.1" min="0.1" value="5">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="roomLength">Raumlänge (m):</label>
+                        <input type="number" id="roomLength" step="0.1" min="1" value="4">
+                    </div>
+                </div>
+                
+                <div>
+                    <div class="form-group">
+                        <label for="roomWidth">Raumbreite (m):</label>
+                        <input type="number" id="roomWidth" step="0.1" min="1" value="3">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="roomHeight">Raumhöhe (m):</label>
+                        <input type="number" id="roomHeight" step="0.1" min="1.5" value="2.5">
+                    </div>
+                </div>
+                
+                <div>
+                    <div class="form-group">
+                        <label for="furniture">Möblierung:</label>
+                        <select id="furniture">
+                            <option value="no">Keine Möbel</option>
+                            <option value="yes" selected>Möbliert</option>
+                        </select>
+                    </div>
+                    
+                    <button id="calculateBtn1">Berechnen</button>
+                </div>
             </div>
-            <div class="form-group">
-                <label for="roomLength">Raumlänge (m):</label>
-                <input type="number" id="roomLength" step="0.1" min="1" value="4">
+            
+            <div class="result-container" id="result1">
+                <div class="info-box">
+                    Geben Sie die Parameter ein und klicken Sie auf "Berechnen".
+                </div>
             </div>
-            <div class="form-group">
-                <label for="roomWidth">Raumbreite (m):</label>
-                <input type="number" id="roomWidth" step="0.1" min="1" value="3">
-            </div>
-            <div class="form-group">
-                <label for="roomHeight">Raumhöhe (m):</label>
-                <input type="number" id="roomHeight" step="0.1" min="1.5" value="2.5">
-            </div>
-            <div class="form-group">
-                <label for="furniture">Möblierung:</label>
-                <select id="furniture">
-                    <option value="no">Keine Möbel</option>
-                    <option value="yes" selected>Möbliert</option>
-                </select>
-            </div>
-            <button id="calculateBtn1">Berechnen</button>
-            <div class="result" id="result1"></div>
+            
+            <h3>Standard-Flaschengrößen</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Größe (kg)</th>
+                        <th>Typische Anwendung</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>2</td>
+                        <td>Haushalt, kleine Gewerbebetriebe</td>
+                    </tr>
+                    <tr>
+                        <td>5</td>
+                        <td>Gastronomie, mittlere Betriebe</td>
+                    </tr>
+                    <tr>
+                        <td>10</td>
+                        <td>Industrie, große Systeme</td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
-
-        <!-- Formular 2: Maximale Flaschengröße -->
-        <div id="form2">
-            <h2>Maximale nutzbare CO₂-Gasflasche</h2>
-            <div class="form-group">
-                <label for="roomLength2">Raumlänge (m):</label>
-                <input type="number" id="roomLength2" step="0.1" min="1" value="5">
+        
+        <!-- Rechte Spalte: Theorie & Formeln -->
+        <div class="panel">
+            <h2>Theoretische Grundlagen</h2>
+            
+            <h3>Berechnungsformeln</h3>
+            
+            <div class="formula">
+                Mindestvolumen (m³) = Füllmenge (kg) × 17 m³/kg
             </div>
-            <div class="form-group">
-                <label for="roomWidth2">Raumbreite (m):</label>
-                <input type="number" id="roomWidth2" step="0.1" min="1" value="4">
+            
+            <div class="formula">
+                Mindestfläche (m²) = Füllmenge (kg) × 7,5 m²/kg
             </div>
-            <div class="form-group">
-                <label for="roomHeight2">Raumhöhe (m):</label>
-                <input type="number" id="roomHeight2" step="0.1" min="1.5" value="2.5">
+            
+            <div class="info-box">
+                <strong>Hinweis:</strong> Bei möblierten Räumen wird die Mindestfläche um 10% erhöht.
             </div>
-            <button id="calculateBtn2">Berechnen</button>
-            <div class="result" id="result2"></div>
-        </div>
-
-        <div class="warning">
-            <strong>Hinweis:</strong> Dieser Rechner dient als Richtwert. Für genaue Sicherheitsberechnungen konsultieren Sie bitte Fachpersonal.
+            
+            <h3>Sicherheitsrichtlinien</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>CO₂-Konzentration</th>
+                        <th>Wirkung</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>0.04% (400 ppm)</td>
+                        <td>Natürliche Konzentration in Luft</td>
+                    </tr>
+                    <tr>
+                        <td>1% (10.000 ppm)</td>
+                        <td>Leichte Ermüdung</td>
+                    </tr>
+                    <tr>
+                        <td>3% (30.000 ppm)</td>
+                        <td>Atemnot, Kopfschmerzen</td>
+                    </tr>
+                    <tr>
+                        <td>8% (80.000 ppm)</td>
+                        <td>Lebensgefahr</td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div class="warning">
+                <strong>Sicherheitshinweis:</strong> Dieser Rechner dient nur zur Orientierung. Konsultieren Sie für genaue Sicherheitsbewertungen immer Fachpersonal.
+            </div>
+            
+            <h3>Technische Daten</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Parameter</th>
+                        <th>Wert</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Dichte CO₂ (gasförmig)</td>
+                        <td>1,977 kg/m³ (bei 0°C)</td>
+                    </tr>
+                    <tr>
+                        <td>Dichte CO₂ (flüssig)</td>
+                        <td>1.101 kg/m³</td>
+                    </tr>
+                    <tr>
+                        <td>Umrechnungsfaktor</td>
+                        <td>1 kg ≈ 0,51 m³ Gas</td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
     </div>
 
     <script>
-        // Warte bis das DOM vollständig geladen ist
         document.addEventListener('DOMContentLoaded', function() {
-            console.log("CO₂-Rechner ist bereit");
-            
-            // Event-Listener für beide Buttons
             document.getElementById('calculateBtn1').addEventListener('click', calculateMinRoomSize);
-            document.getElementById('calculateBtn2').addEventListener('click', calculateMaxGasCylinder);
         });
 
         function calculateMinRoomSize() {
-            // Eingabewerte mit Standardwerten
             const fillAmount = parseFloat(document.getElementById('fillAmount').value) || 0;
             const roomLength = parseFloat(document.getElementById('roomLength').value) || 0;
             const roomWidth = parseFloat(document.getElementById('roomWidth').value) || 0;
@@ -159,58 +353,25 @@
 
             // Berechnungen
             const roomVolume = roomLength * roomWidth * roomHeight;
-            let minVolumeRequired = fillAmount * 17; // 17 m³ pro kg CO₂
-            let minAreaRequired = fillAmount * 7.5;  // 7.5 m² pro kg CO₂
+            let minVolumeRequired = fillAmount * 17;
+            let minAreaRequired = fillAmount * 7.5;
 
-            // Anpassungen
             if (furniture === 'yes') minAreaRequired *= 1.1;
 
             // Ergebnis
             let resultHTML = `
-                <h3>Ergebnis</h3>
+                <div class="result-title">Ergebnis</div>
                 <p><strong>Aktueller Raum:</strong> ${roomVolume.toFixed(1)} m³ (${(roomLength * roomWidth).toFixed(1)} m²)</p>
                 <p><strong>Mindestanforderung:</strong> ${minVolumeRequired.toFixed(1)} m³ (${minAreaRequired.toFixed(1)} m²)</p>
             `;
 
             if (roomVolume >= minVolumeRequired) {
-                resultHTML += `<div class="success">✔️ Raum ausreichend groß</div>`;
+                resultHTML += `<div class="success">✔️ Der Raum erfüllt die Sicherheitsanforderungen</div>`;
             } else {
-                resultHTML += `<div class="warning">⚠️ Raum zu klein für sichere Nutzung!</div>`;
+                resultHTML += `<div class="warning">⚠️ Achtung: Raum ist zu klein für sichere Nutzung!</div>`;
             }
 
             document.getElementById('result1').innerHTML = resultHTML;
-        }
-
-        function calculateMaxGasCylinder() {
-            // Eingabewerte
-            const roomLength = parseFloat(document.getElementById('roomLength2').value) || 0;
-            const roomWidth = parseFloat(document.getElementById('roomWidth2').value) || 0;
-            const roomHeight = parseFloat(document.getElementById('roomHeight2').value) || 2.5;
-
-            // Berechnung
-            const roomVolume = roomLength * roomWidth * roomHeight;
-            const maxKg = (roomVolume / 17).toFixed(1);
-
-            // Gängige Flaschengrößen
-            const commonSizes = [2, 5, 6, 10, 20];
-            let recommendedSize = 0;
-            commonSizes.forEach(size => {
-                if (size <= maxKg) recommendedSize = size;
-            });
-
-            // Ergebnis
-            let resultHTML = `
-                <h3>Ergebnis</h3>
-                <p><strong>Raumvolumen:</strong> ${roomVolume.toFixed(1)} m³</p>
-                <p><strong>Maximal zulässige Füllmenge:</strong> ${maxKg} kg</p>
-                <p><strong>Empfohlene Standardflasche:</strong> ${recommendedSize} kg</p>
-            `;
-
-            if (maxKg < 2) {
-                resultHTML += `<div class="warning">⚠️ Raum zu klein für Standardflaschen!</div>`;
-            }
-
-            document.getElementById('result2').innerHTML = resultHTML;
         }
     </script>
 </body>
