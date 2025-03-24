@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CO₂-Flaschenrechner mit Raumkapazität (Österreich)</title>
+    <title>CO₂-Sicherheitsrechner (Österreich)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         :root {
@@ -13,7 +13,7 @@
             --light: #ecf0f1;
             --dark: #2c3e50;
         }
-        
+        * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: var(--light);
@@ -21,7 +21,6 @@
             line-height: 1.6;
             padding: 20px;
         }
-        
         .container {
             max-width: 1200px;
             margin: 0 auto;
@@ -30,27 +29,19 @@
             box-shadow: 0 2px 15px rgba(0,0,0,0.1);
             padding: 2rem;
         }
-        
-        h1 {
-            color: var(--primary);
-            text-align: center;
-            margin-bottom: 1.5rem;
-        }
-        
+        h1 { color: var(--primary); text-align: center; margin-bottom: 1.5rem; }
         .form-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 1.5rem;
             margin-bottom: 2rem;
         }
-        
         .form-group label {
             display: block;
             margin-bottom: 0.5rem;
             font-weight: 600;
             color: var(--primary);
         }
-        
         input, select {
             width: 100%;
             padding: 0.8rem;
@@ -58,7 +49,6 @@
             border-radius: 4px;
             font-size: 1rem;
         }
-        
         button {
             background: var(--secondary);
             color: white;
@@ -71,35 +61,22 @@
             transition: all 0.3s;
             margin: 1rem 0;
         }
-        
-        button:hover {
-            background: var(--primary);
-        }
-        
-        #pdfButton {
-            background: var(--accent);
-            margin-left: 1rem;
-        }
-        
+        #pdfButton { background: var(--accent); margin-left: 1rem; }
+        button:hover { background: var(--primary); }
         .result-section {
             background: #f8f9fa;
             border-radius: 8px;
             padding: 1.5rem;
             margin-top: 2rem;
         }
-        
-        .capacity-info {
+        .capacity-info, .ventilation-plan {
             background: white;
             border: 1px solid var(--secondary);
             border-radius: 6px;
             padding: 1rem;
             margin: 1.5rem 0;
         }
-        
-        .cylinder-combinations {
-            margin-top: 1.5rem;
-        }
-        
+        .cylinder-combinations { margin-top: 1.5rem; }
         .combination {
             background: white;
             border: 1px solid #ddd;
@@ -110,7 +87,6 @@
             flex-wrap: wrap;
             gap: 0.5rem;
         }
-        
         .cylinder {
             background: var(--secondary);
             color: white;
@@ -118,65 +94,74 @@
             border-radius: 4px;
             font-weight: 600;
         }
-        
-        .legal {
-            font-size: 0.8rem;
-            color: #666;
-            margin-top: 2rem;
-            padding-top: 1rem;
-            border-top: 1px solid #eee;
+        .legal { font-size: 0.8rem; color: #666; margin-top: 2rem; padding-top: 1rem; border-top: 1px solid #eee; }
+        .success { color: #27ae60; font-weight: 600; }
+        .warning { color: #e74c3c; font-weight: 600; }
+        .ventilation-sketch {
+            display: flex;
+            justify-content: space-around;
+            margin: 1rem 0;
         }
-        
-        .success {
-            color: #27ae60;
-            font-weight: 600;
-        }
-        
-        .warning {
-            color: #e74c3c;
-            font-weight: 600;
+        .vent-opening {
+            text-align: center;
+            padding: 1rem;
+            border: 1px dashed #ccc;
+            border-radius: 4px;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>CO₂-Flaschenkapazitätsrechner</h1>
+        <h1>CO₂-Sicherheitsrechner (Österreich)</h1>
         
         <div class="form-grid">
             <div class="form-group">
                 <label for="roomLength">Raumlänge (m):</label>
                 <input type="number" id="roomLength" min="1" step="0.1" value="5">
             </div>
-            
             <div class="form-group">
                 <label for="roomWidth">Raumbreite (m):</label>
                 <input type="number" id="roomWidth" min="1" step="0.1" value="4">
             </div>
-            
             <div class="form-group">
                 <label for="roomHeight">Raumhöhe (m):</label>
                 <input type="number" id="roomHeight" min="1.5" step="0.1" value="2.5">
             </div>
-            
             <div class="form-group">
-                <label for="ventilation">Belüftung:</label>
+                <label for="furniture">Möblierung:</label>
+                <select id="furniture">
+                    <option value="none">Keine Möbel</option>
+                    <option value="partial">Teilmöbliert (≤30%)</option>
+                    <option value="full" selected>Vollmöbliert (>30%)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="ventilation">Belüftungstyp:</label>
                 <select id="ventilation">
                     <option value="natural">Natürlich</option>
                     <option value="mechanical">Mechanisch</option>
                     <option value="none">Keine</option>
                 </select>
             </div>
+            <div class="form-group">
+                <label for="usage">Nutzungsdauer:</label>
+                <select id="usage">
+                    <option value="short">≤4h/Tag</option>
+                    <option value="long">>4h/Tag</option>
+                </select>
+            </div>
         </div>
         
-        <button id="calculateBtn">Berechnen</button>
-        <button id="pdfButton">PDF erstellen</button>
+        <div>
+            <button id="calculateBtn">Berechnen</button>
+            <button id="pdfButton">PDF erstellen</button>
+        </div>
         
         <div class="result-section" id="resultContainer">
             <h2>Ergebnisse</h2>
             <div id="safetyResult"></div>
-            
             <div class="capacity-info" id="capacityResult"></div>
-            
+            <div class="ventilation-plan" id="ventilationResult"></div>
             <div class="cylinder-combinations">
                 <h3>Optimale Flaschenkombinationen</h3>
                 <div id="combinationsResult"></div>
@@ -184,16 +169,14 @@
         </div>
         
         <div class="legal">
-            <strong>Rechtsgrundlagen:</strong> ASchG §28, AAV Anlage 3, ÖNORM EN 13779
+            <strong>Rechtsgrundlagen:</strong> ASchG §28, AAV Anlage 3, ÖNORM EN 13779, TRGS 510
         </div>
     </div>
 
     <script>
         const { jsPDF } = window.jspdf;
-        
-        // Standardflaschen nach österreichischer ÖNORM
         const STANDARD_CYLINDERS = [2, 5, 10, 20, 50];
-        const SAFETY_FACTOR = 19; // 19 m³/kg CO₂ nach ASchG
+        const SAFETY_FACTOR = 19; // 19 m³/kg nach ASchG
         
         document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('calculateBtn').addEventListener('click', calculate);
@@ -201,66 +184,117 @@
         });
 
         function calculate() {
+            // Eingabewerte
             const roomLength = parseFloat(document.getElementById('roomLength').value) || 0;
             const roomWidth = parseFloat(document.getElementById('roomWidth').value) || 0;
             const roomHeight = parseFloat(document.getElementById('roomHeight').value) || 0;
+            const furniture = document.getElementById('furniture').value;
             const ventilation = document.getElementById('ventilation').value;
+            const usage = document.getElementById('usage').value;
             
-            const roomVolume = roomLength * roomWidth * roomHeight;
-            const ventilationFactor = ventilation === 'none' ? 1.4 : 1.0;
-            const maxCO2 = (roomVolume / SAFETY_FACTOR) * ventilationFactor;
+            // Volumenberechnung mit Möblierungskorrektur
+            const grossVolume = roomLength * roomWidth * roomHeight;
+            const furnitureFactor = furniture === 'full' ? 0.85 : (furniture === 'partial' ? 0.93 : 1);
+            const netVolume = grossVolume * furnitureFactor;
+            const maxCO2 = netVolume / SAFETY_FACTOR;
             
             // Sicherheitsbewertung
             let safetyHTML = `
-                <p><strong>Raumvolumen:</strong> ${roomVolume.toFixed(1)} m³</p>
+                <h3>Sicherheitsbewertung</h3>
+                <p><strong>Bruttovolumen:</strong> ${grossVolume.toFixed(1)} m³</p>
+                <p><strong>Effektives Volumen:</strong> ${netVolume.toFixed(1)} m³ (${(furnitureFactor*100).toFixed(0)}% Nutzung)</p>
                 <p><strong>Maximal zulässige CO₂-Menge:</strong> ${maxCO2.toFixed(1)} kg</p>
                 <p class="${ventilation === 'none' ? 'warning' : 'success'}">
-                    ${ventilation === 'none' ? '⚠️ Keine Belüftung - besondere Vorsicht erforderlich!' : '✔️ Belüftung ausreichend'}
+                    ${ventilation === 'none' ? '⚠️ Keine Belüftung - besondere Vorsicht erforderlich!' : '✔️ Belüftungssystem vorhanden'}
                 </p>
             `;
-            
             document.getElementById('safetyResult').innerHTML = safetyHTML;
             
-            // Flaschenkapazität berechnen
-            let capacityHTML = `<h3>Maximale Flaschenanzahl für diesen Raum</h3>`;
-            
+            // Flaschenkapazität
+            let capacityHTML = `<h3>Maximale Flaschenanzahl</h3>`;
             STANDARD_CYLINDERS.forEach(cyl => {
                 const maxCylinders = Math.floor(maxCO2 / cyl);
                 if (maxCylinders > 0) {
-                    capacityHTML += `
-                        <p><strong>${cyl}kg-Flaschen:</strong> Bis zu ${maxCylinders} Stück (${(maxCylinders * cyl).toFixed(1)} kg gesamt)</p>
-                    `;
+                    capacityHTML += `<p><strong>${cyl}kg-Flaschen:</strong> Bis zu ${maxCylinders} Stück (${(maxCylinders*cyl).toFixed(1)} kg)</p>`;
                 }
             });
-            
             document.getElementById('capacityResult').innerHTML = capacityHTML;
             
-            // Optimale Kombinationen
-            const combinations = calculateOptimalCombinations(maxCO2);
-            let combHTML = '';
+            // Lüftungsplan
+            document.getElementById('ventilationResult').innerHTML = getVentilationPlan(
+                grossVolume, netVolume, ventilation, usage
+            );
             
-            if (combinations.length > 0) {
-                combinations.forEach(comb => {
-                    combHTML += `<div class="combination">
-                        <span>${comb.total.toFixed(1)} kg (${comb.count} Flaschen):</span>
-                        ${comb.cylinders.map(c => `<span class="cylinder">${c}kg</span>`).join(' + ')}
-                        <span style="margin-left:auto">${((comb.total/maxCO2)*100).toFixed(0)}% der max. Kapazität</span>
-                    </div>`;
-                });
-            } else {
-                combHTML = `<p>Keine Standardkombination möglich - Spezialflasche erforderlich</p>`;
-            }
-            
-            document.getElementById('combinationsResult').innerHTML = combHTML;
+            // Flaschenkombinationen
+            document.getElementById('combinationsResult').innerHTML = 
+                getCylinderCombinations(maxCO2);
         }
 
-        function calculateOptimalCombinations(maxCO2) {
-            let results = [];
+        function getVentilationPlan(grossVol, netVol, ventilation, usage) {
+            const deficit = grossVol - netVol;
+            let html = `<h3>Lüftungsplan (ÖNORM EN 13779)</h3>`;
+            
+            // Gaswarngerät-Empfehlung
+            const needsDetector = ventilation === 'none' || usage === 'long' || (netVol / grossVol) < 0.7;
+            if (needsDetector) {
+                html += `
+                    <div class="warning">
+                        <p>🔔 <strong>CO₂-Warngerät empfohlen</strong> (5.000 ppm Grenzwert nach TRGS 510)</p>
+                        <p>Begründung: ${ventilation === 'none' ? 'Keine Belüftung' : 
+                          usage === 'long' ? 'Langzeitaufenthalt' : 'Hohe Möblierung'}</p>
+                    </div>
+                `;
+            }
+            
+            // Natürliche Lüftung
+            if (ventilation === 'natural') {
+                const area = (deficit * 0.06).toFixed(2);
+                const size = (Math.sqrt(area)*100).toFixed(0);
+                
+                html += `
+                    <p><strong>Natürliche Lüftung erforderlich:</strong></p>
+                    <p>Mindestöffnungsfläche: ${area} m² (ca. ${size}×${size} cm)</p>
+                    <div class="ventilation-sketch">
+                        <div class="vent-opening">
+                            <p>Untere Öffnung</p>
+                            <p>≤50cm über Boden</p>
+                        </div>
+                        <div class="vent-opening">
+                            <p>Obere Öffnung</p>
+                            <p>≥1.80m über Boden</p>
+                        </div>
+                    </div>
+                    <p><em>Horizontaler Abstand: ≥2m zwischen Öffnungen</em></p>
+                `;
+                
+                if (deficit > 15) {
+                    html += `
+                        <div class="warning">
+                            <p>⚠️ Bei Defizit >15m³ (${deficit.toFixed(1)}m³) mechanische Lüftung empfohlen</p>
+                        </div>
+                    `;
+                }
+            }
+            
+            // Mechanische Lüftung
+            if (ventilation === 'mechanical') {
+                const airflow = (deficit * 1.8).toFixed(1);
+                html += `
+                    <p><strong>Mechanische Lüftung:</strong></p>
+                    <p>Mindestluftwechsel: ${airflow} m³/h (Klasse II nach ÖNORM EN 13779)</p>
+                `;
+            }
+            
+            return html;
+        }
+
+        function getCylinderCombinations(maxCO2) {
+            let combinations = [];
             
             // 1-Flaschen-Lösungen
             STANDARD_CYLINDERS.forEach(cyl => {
                 if (cyl <= maxCO2) {
-                    results.push({
+                    combinations.push({
                         cylinders: [cyl],
                         total: cyl,
                         count: 1
@@ -268,12 +302,12 @@
                 }
             });
             
-            // 2-Flaschen-Kombinationen (optimiert für Raumauslastung)
+            // 2-Flaschen-Kombinationen
             for (let i = 0; i < STANDARD_CYLINDERS.length; i++) {
                 for (let j = i; j < STANDARD_CYLINDERS.length; j++) {
                     const sum = STANDARD_CYLINDERS[i] + STANDARD_CYLINDERS[j];
                     if (sum <= maxCO2) {
-                        results.push({
+                        combinations.push({
                             cylinders: [STANDARD_CYLINDERS[i], STANDARD_CYLINDERS[j]],
                             total: sum,
                             count: 2
@@ -288,8 +322,8 @@
                     for (let j = i; j < STANDARD_CYLINDERS.length; j++) {
                         for (let k = j; k < STANDARD_CYLINDERS.length; k++) {
                             const sum = STANDARD_CYLINDERS[i] + STANDARD_CYLINDERS[j] + STANDARD_CYLINDERS[k];
-                            if (sum <= maxCO2 && sum > maxCO2 * 0.8) {
-                                results.push({
+                            if (sum <= maxCO2) {
+                                combinations.push({
                                     cylinders: [STANDARD_CYLINDERS[i], STANDARD_CYLINDERS[j], STANDARD_CYLINDERS[k]],
                                     total: sum,
                                     count: 3
@@ -300,46 +334,86 @@
                 }
             }
             
-            // Ergebnisse filtern und sortieren
-            return results
-                .filter(comb => comb.total > maxCO2 * 0.5) // Mindestens 50% Auslastung
+            // Ergebnisse formatieren
+            combinations = combinations
+                .filter(c => c.total >= maxCO2 * 0.7) // Mind. 70% Auslastung
                 .sort((a, b) => b.total - a.total) // Beste Auslastung zuerst
                 .slice(0, 5); // Top 5 Kombinationen
+            
+            if (combinations.length === 0) return '<p>Keine normgerechten Kombinationen möglich</p>';
+            
+            let html = '';
+            combinations.forEach(comb => {
+                const percentage = (comb.total / maxCO2 * 100).toFixed(0);
+                html += `
+                    <div class="combination">
+                        ${comb.cylinders.map(c => `<span class="cylinder">${c}kg</span>`).join(' + ')}
+                        <span style="margin-left:auto">
+                            ${comb.total.toFixed(1)} kg (${percentage}% Auslastung)
+                        </span>
+                    </div>
+                `;
+            });
+            
+            return html;
         }
 
         function generatePDF() {
             const doc = new jsPDF();
             
-            // PDF-Inhalt
+            // Titel
             doc.setFontSize(16);
-            doc.text("CO₂-Flaschenkapazitätsbericht (Österreich)", 105, 15, {align: 'center'});
+            doc.setTextColor(40);
+            doc.setFont('helvetica', 'bold');
+            doc.text("CO₂-SICHERHEITSBEREICHNUNG (ÖSTERREICH)", 105, 15, {align: 'center'});
             
-            doc.setFontSize(12);
-            doc.text(`Raumvolumen: ${document.getElementById('roomLength').value} × ${document.getElementById('roomWidth').value} × ${document.getElementById('roomHeight').value} m`, 15, 30);
-            doc.text(`Belüftung: ${document.getElementById('ventilation').options[document.getElementById('ventilation').selectedIndex].text}`, 15, 37);
+            // Metadaten
+            doc.setFontSize(10);
+            doc.setTextColor(100);
+            doc.text(`Erstellt am: ${new Date().toLocaleDateString('de-AT')}`, 105, 22, {align: 'center'});
             
-            // Sicherheitsdaten
-            const safetyText = document.getElementById('safetyResult').innerText.split('\n');
-            doc.setFontSize(14);
-            doc.text("Sicherheitsbewertung:", 15, 50);
+            // Eingabedaten
             doc.setFontSize(12);
-            safetyText.forEach((line, i) => {
-                if (line.trim()) doc.text(line.trim(), 20, 60 + (i * 7));
+            doc.setTextColor(40);
+            doc.text("1. EINGABEPARAMETER", 20, 35);
+            doc.setFont('helvetica', 'normal');
+            
+            const inputs = [
+                `Raumabmessungen: ${document.getElementById('roomLength').value} × ${document.getElementById('roomWidth').value} × ${document.getElementById('roomHeight').value} m`,
+                `Bruttovolumen: ${(document.getElementById('roomLength').value * document.getElementById('roomWidth').value * document.getElementById('roomHeight').value).toFixed(1)} m³`,
+                `Möblierung: ${document.getElementById('furniture').options[document.getElementById('furniture').selectedIndex].text}`,
+                `Belüftung: ${document.getElementById('ventilation').options[document.getElementById('ventilation').selectedIndex].text}`,
+                `Nutzung: ${document.getElementById('usage').options[document.getElementById('usage').selectedIndex].text}`
+            ];
+            
+            inputs.forEach((item, i) => {
+                doc.text(item, 25, 45 + (i * 7));
             });
             
-            // Flaschenkapazität
-            const capacityText = document.getElementById('capacityResult').innerText.split('\n');
-            doc.setFontSize(14);
-            doc.text("Maximale Flaschenanzahl:", 15, 90);
+            // Ergebnisse
             doc.setFontSize(12);
-            capacityText.forEach((line, i) => {
-                if (line.trim() && !line.includes("Maximale Flaschenanzahl")) {
-                    doc.text(line.trim(), 20, 100 + (i * 7));
-                }
+            doc.setFont('helvetica', 'bold');
+            doc.text("2. ERGEBNISSE", 20, 85);
+            doc.setFont('normal');
+            
+            const safetyText = document.getElementById('safetyResult').innerText.split('\n');
+            safetyText.forEach((line, i) => {
+                if (line.trim()) doc.text(line.trim(), 25, 95 + (i * 7));
+            });
+            
+            // Flaschenkombinationen
+            doc.setFont('bold');
+            doc.text("3. FLASCHENKOMBINATIONEN", 20, 140);
+            doc.setFont('normal');
+            
+            const combinations = document.querySelectorAll('.combination');
+            combinations.forEach((comb, i) => {
+                if (140 + (i * 10) > 270) doc.addPage();
+                doc.text(comb.innerText.replace(/\n/g, ' '), 25, 150 + (i * 10));
             });
             
             // Speichern
-            doc.save(`CO2-Flaschenbericht_${new Date().toISOString().slice(0,10)}.pdf`);
+            doc.save(`CO2-Sicherheitsbericht_${new Date().toISOString().slice(0,10)}.pdf`);
         }
     </script>
 </body>
